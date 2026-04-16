@@ -14,7 +14,7 @@ var hotkeyId = null;
 
 // 获取前台窗口信息
 getForegroundInfo = function(){
-	var hwnd = win.getForeground();
+	var hwnd = ..win.getForeground();
 	if(!hwnd) return null;
 	
 	// 排除桌面窗口
@@ -28,17 +28,17 @@ getForegroundInfo = function(){
 	if(..mainForm && hwnd == ..mainForm.hwnd) return null;
 	
 	// 获取窗口标题
-	var title = winex.getText(hwnd);
-	if(!#title) title = win.getText(hwnd);
+	var title = ..winex.getText(hwnd);
+	if(!#title) title = ..win.getText(hwnd);
 	
 	// 获取窗口类名
-	var cls = win.getClass(hwnd);
+	var cls = ..win.getClass(hwnd);
 	
 	// 排除不可见窗口
-	if(!win.isVisible(hwnd)) return null;
+	if(!..win.isVisible(hwnd)) return null;
 	
 	// 排除无标题且类名为按钮类的窗口
-	if(!#title && string.find(cls,"Button")) return null;
+	if(!#title && ..string.find(cls,"Button")) return null;
 	
 	return { hwnd = hwnd; title = title; cls = cls };
 }
@@ -52,13 +52,13 @@ toggleForegroundTopmost = function(){
 	
 	// 如果已经置顶，则取消置顶
 	if(topmostWindows[hwnd]){
-		win.setTopmost(hwnd, false);
+		..win.setTopmost(hwnd, false);
 		topmostWindows[hwnd] = null;
 		return true;
 	}
 	
 	// 设置置顶
-	win.setTopmost(hwnd, true);
+	..win.setTopmost(hwnd, true);
 	topmostWindows[hwnd] = { title = info.title; cls = info.cls };
 	return true;
 }
@@ -68,7 +68,7 @@ removeTopmost = function(hwnd){
 	if(!hwnd) return false;
 	
 	if(topmostWindows[hwnd]){
-		win.setTopmost(hwnd, false);
+		..win.setTopmost(hwnd, false);
 		topmostWindows[hwnd] = null;
 		return true;
 	}
@@ -79,8 +79,8 @@ removeTopmost = function(hwnd){
 removeAllTopmost = function(){
 	var count = 0;
 	for(hwnd, info in topmostWindows){
-		if(hwnd && win.isWindow(hwnd)){
-			win.setTopmost(hwnd, false);
+		if(hwnd && ..win.isWindow(hwnd)){
+			..win.setTopmost(hwnd, false);
 			count++;
 		}
 	}
@@ -105,7 +105,7 @@ getTopmostList = function(){
 	
 	var list = {};
 	for(hwnd, info in topmostWindows){
-		table.push(list, { hwnd = hwnd; title = info.title; cls = info.cls });
+		..table.push(list, { hwnd = hwnd; title = info.title; cls = info.cls });
 	}
 	return list;
 }
@@ -119,7 +119,7 @@ isTopmost = function(hwnd){
 // 清理已不存在的窗口
 cleanInvalidWindows = function(){
 	for(hwnd in topmostWindows){
-		if(!win.isWindow(hwnd)){
+		if(!..win.isWindow(hwnd)){
 			topmostWindows[hwnd] = null;
 		}
 	}
@@ -129,10 +129,10 @@ cleanInvalidWindows = function(){
 registerHotkey = function(winform){
 	unregisterHotkey(winform);
 	
-	if(!config.topmost.enabled) return false;
+	if(!..config.topmost.enabled) return false;
 	
-	var mod = config.topmost.hotkeyMod;
-	var vk = config.topmost.hotkeyVk;
+	var mod = ..config.topmost.hotkeyMod;
+	var vk = ..config.topmost.hotkeyVk;
 	
 	if(!vk) return false;
 	
@@ -158,25 +158,25 @@ hotkeyToString = function(mod, vk){
 	if(!vk) return "";
 	
 	var parts = {};
-	if(mod & 2/*_MOD_CONTROL*/) table.push(parts, "Ctrl");
-	if(mod & 4/*_MOD_SHIFT*/) table.push(parts, "Shift");
-	if(mod & 1/*_MOD_ALT*/) table.push(parts, "Alt");
-	if(mod & 0x8/*_MOD_WIN*/) table.push(parts, "Win");
+	if(mod & 2/*_MOD_CONTROL*/) ..table.push(parts, "Ctrl");
+	if(mod & 4/*_MOD_SHIFT*/) ..table.push(parts, "Shift");
+	if(mod & 1/*_MOD_ALT*/) ..table.push(parts, "Alt");
+	if(mod & 0x8/*_MOD_WIN*/) ..table.push(parts, "Win");
 	
 	// 功能键
 	if(vk >= 0x70/*VK_F1*/ && vk <= 0x87/*VK_F24*/){
-		table.push(parts, "F" + (vk - 0x70 + 1));
+		..table.push(parts, "F" + (vk - 0x70 + 1));
 	}
 	// 字母键
 	elseif(vk >= 0x41/*A*/ && vk <= 0x5A/*Z*/){
-		table.push(parts, string.pack(vk));
+		..table.push(parts, ..string.pack(vk));
 	}
 	// 数字键
 	elseif(vk >= 0x30/*0*/ && vk <= 0x39/*9*/){
-		table.push(parts, string.pack(vk));
+		..table.push(parts, ..string.pack(vk));
 	}
 	
-	return string.join(parts, "+");
+	return ..string.join(parts, "+");
 }
 
 /**intellisense(app.topmost)
