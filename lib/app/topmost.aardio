@@ -1,0 +1,194 @@
+//topmost 置顶窗口管理
+import win;
+import winex;
+import config;
+
+namespace app.topmost;
+
+// 置顶窗口表 { hwnd = {title=窗口标题, cls=窗口类名} }
+// 注意：hwnd为指针类型，仅在当前会话有效，不跨重启持久化
+var topmostWindows = {};
+
+// 热键ID
+var hotkeyId = null;
+
+// 获取前台窗口信息
+getForegroundInfo = function(){
+	var hwnd = win.getForeground();
+	if(!hwnd) return null;
+	
+	// 排除桌面窗口
+	var desktop = ::User32.GetDesktopWindow();
+	if(hwnd == desktop) return null;
+	
+	var shellWnd = ::User32.FindWindow("Progman",null);
+	if(hwnd == shellWnd) return null;
+	
+	// 排除ImTip主窗口
+	if(..mainForm && hwnd == ..mainForm.hwnd) return null;
+	
+	// 获取窗口标题
+	var title = winex.getText(hwnd);
+	if(!#title) title = win.getText(hwnd);
+	
+	// 获取窗口类名
+	var cls = win.getClass(hwnd);
+	
+	// 排除不可见窗口
+	if(!win.isVisible(hwnd)) return null;
+	
+	// 排除无标题且类名为按钮类的窗口
+	if(!#title && string.find(cls,"Button")) return null;
+	
+	return { hwnd = hwnd; title = title; cls = cls };
+}
+
+// 置顶当前前台窗口（如果已置顶则取消）
+toggleForegroundTopmost = function(){
+	var info = getForegroundInfo();
+	if(!info) return false;
+	
+	var hwnd = info.hwnd;
+	
+	// 如果已经置顶，则取消置顶
+	if(topmostWindows[hwnd]){
+		win.setTopmost(hwnd, false);
+		topmostWindows[hwnd] = null;
+		return true;
+	}
+	
+	// 设置置顶
+	win.setTopmost(hwnd, true);
+	topmostWindows[hwnd] = { title = info.title; cls = info.cls };
+	return true;
+}
+
+// 取消指定窗口的置顶
+removeTopmost = function(hwnd){
+	if(!hwnd) return false;
+	
+	if(topmostWindows[hwnd]){
+		win.setTopmost(hwnd, false);
+		topmostWindows[hwnd] = null;
+		return true;
+	}
+	return false;
+}
+
+// 取消所有置顶窗口
+removeAllTopmost = function(){
+	var count = 0;
+	for(hwnd, info in topmostWindows){
+		if(hwnd && win.isWindow(hwnd)){
+			win.setTopmost(hwnd, false);
+			count++;
+		}
+	}
+	topmostWindows = {};
+	return count;
+}
+
+// 获取置顶窗口数量
+getTopmostCount = function(){
+	cleanInvalidWindows();
+	
+	var count = 0;
+	for(hwnd in topmostWindows){
+		count++;
+	}
+	return count;
+}
+
+// 获取所有置顶窗口信息
+getTopmostList = function(){
+	cleanInvalidWindows();
+	
+	var list = {};
+	for(hwnd, info in topmostWindows){
+		table.push(list, { hwnd = hwnd; title = info.title; cls = info.cls });
+	}
+	return list;
+}
+
+// 检查窗口是否已置顶
+isTopmost = function(hwnd){
+	if(!hwnd) return false;
+	return !!topmostWindows[hwnd];
+}
+
+// 清理已不存在的窗口
+cleanInvalidWindows = function(){
+	for(hwnd in topmostWindows){
+		if(!win.isWindow(hwnd)){
+			topmostWindows[hwnd] = null;
+		}
+	}
+}
+
+// 注册置顶热键
+registerHotkey = function(winform){
+	unregisterHotkey(winform);
+	
+	if(!config.topmost.enabled) return false;
+	
+	var mod = config.topmost.hotkeyMod;
+	var vk = config.topmost.hotkeyVk;
+	
+	if(!vk) return false;
+	
+	hotkeyId = winform.reghotkey(
+		function(id,mod,vk){
+			toggleForegroundTopmost();
+		}, mod, vk
+	);
+	
+	return !!hotkeyId;
+}
+
+// 注销置顶热键
+unregisterHotkey = function(winform){
+	if(hotkeyId && winform){
+		winform.unreghotkey(hotkeyId);
+		hotkeyId = null;
+	}
+}
+
+// 热键值转可读字符串
+hotkeyToString = function(mod, vk){
+	if(!vk) return "";
+	
+	var parts = {};
+	if(mod & 2/*_MOD_CONTROL*/) table.push(parts, "Ctrl");
+	if(mod & 4/*_MOD_SHIFT*/) table.push(parts, "Shift");
+	if(mod & 1/*_MOD_ALT*/) table.push(parts, "Alt");
+	if(mod & 0x8/*_MOD_WIN*/) table.push(parts, "Win");
+	
+	// 功能键
+	if(vk >= 0x70/*VK_F1*/ && vk <= 0x87/*VK_F24*/){
+		table.push(parts, "F" + (vk - 0x70 + 1));
+	}
+	// 字母键
+	elseif(vk >= 0x41/*A*/ && vk <= 0x5A/*Z*/){
+		table.push(parts, string.pack(vk));
+	}
+	// 数字键
+	elseif(vk >= 0x30/*0*/ && vk <= 0x39/*9*/){
+		table.push(parts, string.pack(vk));
+	}
+	
+	return string.join(parts, "+");
+}
+
+/**intellisense(app.topmost)
+getForegroundInfo() = 获取前台窗口信息\n返回 {hwnd,title,cls} 或 null
+toggleForegroundTopmost() = 切换当前前台窗口的置顶状态\n已置顶则取消，未置顶则置顶\n返回是否成功
+removeTopmost(hwnd) = 取消指定窗口的置顶\n返回是否成功
+removeAllTopmost() = 取消所有置顶窗口\n返回取消的窗口数量
+getTopmostCount() = 获取置顶窗口数量
+getTopmostList() = 获取所有置顶窗口信息列表
+isTopmost(hwnd) = 检查窗口是否已置顶
+cleanInvalidWindows() = 清理已不存在的窗口
+registerHotkey(winform) = 注册置顶热键\n返回是否成功
+unregisterHotkey(winform) = 注销置顶热键
+hotkeyToString(mod,vk) = 热键值转可读字符串
+end intellisense**/

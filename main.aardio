@@ -44,6 +44,8 @@ chkImeBarDisabled={cls="plus";text="启用";left=432;top=171;right=512;bottom=19
 chkJab={cls="plus";text="启用 Java 程序支持（JetBrains 等）";left=97;top=307;right=323;bottom=332;align="left";bgcolor=0xFFFFFF;db=1;dl=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=28};
 chkSysRun={cls="plus";text="开机启动";left=97;top=282;right=197;bottom=307;align="left";bgcolor=0xFFFFFF;db=1;dl=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=27};
 chkWatchFullScreen={cls="plus";text="忽略全屏";left=432;top=282;right=532;bottom=302;align="left";bgcolor=0xFFFFFF;db=1;dr=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=23};
+chkTopmost={cls="plus";text="置顶窗口";left=97;top=332;right=197;bottom=352;align="left";bgcolor=0xFFFFFF;db=1;dl=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=32};
+hotkeyTopmost={cls="hotkey";left=217;top=334;right=317;bottom=354;db=1;dl=1;edge=1;z=33};
 iconAiChat={cls="plus";text='\uF031';left=37;top=96;right=87;bottom=146;bgcolor=0xFFFFFF;dl=1;dt=1;font=LOGFONT(h=-22;name='imtip');iconColor=0x6B6BFF;z=17};
 iconFilter={cls="plus";text='\uE82E';left=372;top=244;right=422;bottom=294;bgcolor=0xFFFFFF;db=1;dr=1;font=LOGFONT(h=-22;name='imtip');iconColor=0x00A5FF;z=21};
 iconHotkey={cls="plus";text='\uE8CE';left=36;top=396;right=86;bottom=446;bgcolor=0xFFFFFF;db=1;dl=1;font=LOGFONT(h=-22;name='imtip');iconColor=0xD77800;z=7};
@@ -90,6 +92,7 @@ mainForm.chkJab.skin(style.checkBox);
 mainForm.chkFilterWindows.skin(style.checkBox);
 mainForm.chkWatchFullScreen.skin(style.checkBox);
 mainForm.chkImeBarDisabled.skin(style.checkBox);
+mainForm.chkTopmost.skin(style.checkBox);
 
 mainForm.cardAiChat.directDrawBackgroundOnly();
 mainForm.cardImeTip.directDrawBackgroundOnly();
@@ -254,6 +257,10 @@ mainForm.onCopyData = function(data,dataType){
 }
 
 mainForm.onClose = function(){
+	import app.topmost;
+	app.topmost.unregisterHotkey(mainForm);
+	app.topmost.removeAllTopmost();
+	
     mainForm.show(false);
     return false; 
 } 
@@ -271,6 +278,10 @@ if(config.hotkey.chkEnableHotkey){
 	import app.hotkey;
 	app.hotkey.update(true);
 }
+
+// 置顶窗口功能
+import app.topmost;
+app.topmost.registerHotkey(mainForm);
 
 mainForm.btnImTip.oncommand = function(id,event){
  
@@ -427,6 +438,62 @@ if(config.setting.jab){
 	import app.jab;
 	app.jab.enable(true);
 } 
+
+// 置顶窗口快捷键设置
+mainForm.chkTopmost.checked = !!config.topmost.enabled;
+mainForm.hotkeyTopmost.disabled = !config.topmost.enabled;
+
+if(config.topmost.hotkeyMod && config.topmost.hotkeyVk){
+	mainForm.hotkeyTopmost.sethotkey(config.topmost.hotkeyMod, config.topmost.hotkeyVk);
+}
+else {
+	// 默认 Ctrl+Alt+T
+	mainForm.hotkeyTopmost.sethotkey(2/*_MOD_CONTROL*/ | 1/*_MOD_ALT*/, 0x54/*_VK_T*/);
+}
+
+mainForm.chkTopmost.oncommand = function(id,event){
+	if(owner.checked){
+		var mod, vk = mainForm.hotkeyTopmost.gethotkey();
+		if(!vk){
+			// 默认 Ctrl+Alt+T
+			mainForm.hotkeyTopmost.sethotkey(2/*_MOD_CONTROL*/ | 1/*_MOD_ALT*/, 0x54/*_VK_T*/);
+			mod = 2/*_MOD_CONTROL*/ | 1/*_MOD_ALT*/;
+			vk = 0x54/*_VK_T*/;
+		}
+		config.topmost.enabled = true;
+		config.topmost.hotkeyMod = mod;
+		config.topmost.hotkeyVk = vk;
+		config.topmost.save();
+		
+		import app.topmost;
+		app.topmost.registerHotkey(mainForm);
+		mainForm.hotkeyTopmost.disabled = false;
+	}
+	else {
+		import app.topmost;
+		app.topmost.unregisterHotkey(mainForm);
+		
+		config.topmost.enabled = false;
+		config.topmost.save();
+		mainForm.hotkeyTopmost.disabled = true;
+	}
+}
+
+mainForm.hotkeyTopmost.oncommand = function(id,event){
+	if(!mainForm.chkTopmost.checked) return;
+	
+	var mod, vk = mainForm.hotkeyTopmost.gethotkey();
+	if(!vk) return;
+	
+	import app.topmost;
+	app.topmost.unregisterHotkey(mainForm);
+	
+	config.topmost.hotkeyMod = mod;
+	config.topmost.hotkeyVk = vk;
+	config.topmost.save();
+	
+	app.topmost.registerHotkey(mainForm);
+}
 
  
 if(..config.setting.imeBarDisabled){

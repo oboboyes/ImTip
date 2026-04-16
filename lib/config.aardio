@@ -317,6 +317,15 @@ if(!config.aiChat.itemData) {
 	config.aiChat.selItem=1;
 }
 
+// 置顶窗口默认热键配置: Ctrl+Alt+T
+if(config.topmost.enabled === null) {
+	config.topmost.enabled = true;
+}
+if(!config.topmost.hotkeyVk) {
+	config.topmost.hotkeyMod = 2/*_MOD_CONTROL*/ | 1/*_MOD_ALT*/;
+	config.topmost.hotkeyVk = 0x54/*_VK_T*/;
+}
+
 /**intellisense(config)
 setting = 通用设置
 saveAll() = 保存当前对象（fsys.config ）管理的所有文件同步表（fsys.table 对象）到文件。\n如果 fsys.table 对象调用 enableAutoSave(false) 禁用了自动保存，则 saveAll 调用对其无效。\n禁用自动保存的 fsys.table 对象必须显式调用其 save 方法保存表数据到文件。

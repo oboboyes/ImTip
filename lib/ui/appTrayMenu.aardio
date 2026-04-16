@@ -156,6 +156,26 @@ class appTrayMenu{
 		
 		popmenu.add();//分隔线 
 		
+		// 置顶窗口菜单
+		import app.topmost;
+		var topmostCount = app.topmost.getTopmostCount();
+		
+		popmenu.add('置顶当前窗口',function(id){
+			app.topmost.toggleForegroundTopmost();
+		});
+		
+		popmenu.add('置顶窗口数: ' + topmostCount,function(id){
+			// 仅显示信息，无操作
+		}, 0x1/*_MF_GRAYED*/);
+		
+		if(topmostCount > 0){
+			popmenu.add('取消所有置顶',function(id){
+				var count = app.topmost.removeAllTopmost();
+			});
+		}
+		
+		popmenu.add();//分隔线 
+		
 		if(..mainForm.onTrayMenu){
 			..mainForm.onTrayMenu(popmenu)
 		}
