@@ -80,6 +80,7 @@ removeTopmost = function(hwnd){
 		if(!#title) title = "窗口";
 		..win.setTopmost(hwnd, false);
 		topmostWindows[hwnd] = null;
+		..app.topmostOverlay.removeOverlay(hwnd);
 		..winex.tooltip.balloon("已取消置顶: " + title);
 		return true;
 	}
@@ -92,6 +93,7 @@ removeAllTopmost = function(){
 	for(hwnd, info in topmostWindows){
 		if(hwnd && ..win.isWindow(hwnd)){
 			..win.setTopmost(hwnd, false);
+			..app.topmostOverlay.removeOverlay(hwnd);
 			count++;
 		}
 	}
