@@ -3,6 +3,7 @@ import win;
 import winex;
 import winex.tooltip;
 import config;
+import app.topmostOverlay;
 
 namespace app.topmost;
 
@@ -57,6 +58,7 @@ toggleForegroundTopmost = function(){
 	if(topmostWindows[hwnd]){
 		..win.setTopmost(hwnd, false);
 		topmostWindows[hwnd] = null;
+		..app.topmostOverlay.removeOverlay(hwnd);
 		..winex.tooltip.balloon("已取消置顶: " + title);
 		return true;
 	}
@@ -64,6 +66,7 @@ toggleForegroundTopmost = function(){
 	// 设置置顶
 	..win.setTopmost(hwnd, true);
 	topmostWindows[hwnd] = { title = info.title; cls = info.cls };
+	..app.topmostOverlay.createOverlay(hwnd);
 	..winex.tooltip.balloon("已置顶: " + title);
 	return true;
 }
@@ -73,8 +76,11 @@ removeTopmost = function(hwnd){
 	if(!hwnd) return false;
 	
 	if(topmostWindows[hwnd]){
+		var title = topmostWindows[hwnd].title;
+		if(!#title) title = "窗口";
 		..win.setTopmost(hwnd, false);
 		topmostWindows[hwnd] = null;
+		..winex.tooltip.balloon("已取消置顶: " + title);
 		return true;
 	}
 	return false;

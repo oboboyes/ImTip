@@ -164,14 +164,21 @@ class appTrayMenu{
 			app.topmost.toggleForegroundTopmost();
 		});
 		
-		popmenu.add('置顶窗口数: ' + topmostCount,function(id){
-			// 仅显示信息，无操作
-		}, 0x1/*_MF_GRAYED*/);
-		
 		if(topmostCount > 0){
-			popmenu.add('取消所有置顶',function(id){
-				var count = app.topmost.removeAllTopmost();
+			var topmostList = app.topmost.getTopmostList();
+			var subMenu = ..win.ui.popmenu(winform);
+			for(i, info in topmostList){
+				var title = info.title;
+				if(!#title) title = "窗口";
+				subMenu.add(title, function(id){
+					app.topmost.removeTopmost(info.hwnd);
+				});
+			}
+			subMenu.add();
+			subMenu.add('取消所有置顶', function(id){
+				app.topmost.removeAllTopmost();
 			});
+			popmenu.add('置顶窗口(' + topmostCount + ')', subMenu);
 		}
 		
 		popmenu.add();//分隔线 

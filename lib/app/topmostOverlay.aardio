@@ -1,0 +1,196 @@
+//topmostOverlay 置顶窗口边框高亮覆盖层
+import win;
+import winex;
+import gdip;
+import gdip.graphics;
+import gdip.pen;
+import gdip.solidBrush;
+
+namespace app.topmostOverlay;
+
+// 覆盖层窗口表 { 目标hwnd = 覆盖层hwnd }
+var overlayWindows = {};
+
+// 边框配置
+var BORDER_WIDTH = 4;           // 边框宽度（像素）
+var BORDER_COLOR = 0xFFFF6600;  // 边框颜色（ARGB：橙色，醒目）
+var CORNER_RADIUS = 0;          // 圆角半径（0=直角）
+var TIMER_INTERVAL = 200;       // 定时检查间隔（毫秒）
+
+// 创建边框覆盖层窗口
+createOverlay = function(targetHwnd){
+	if(!targetHwnd) return null;
+	if(!..win.isWindow(targetHwnd)) return null;
+	
+	// 如果已存在覆盖层，先移除
+	if(overlayWindows[targetHwnd]){
+		removeOverlay(targetHwnd);
+	}
+	
+	// 获取目标窗口位置
+	var rect = ..win.getRect(targetHwnd);
+	if(!rect) return null;
+	
+	// 创建透明无边框覆盖窗口
+	var overlayForm = ..win.form(
+		text = "";
+		right = rect.right - rect.left;
+		bottom = rect.bottom - rect.top;
+		border = "none";
+		mode = 0x80000000/*_WS_EX_LAYERED*/ | 0x20/*_WS_EX_TRANSPARENT*/ | 0x8/*_WS_EX_TOPMOST*/;
+		owner = null;  // 无所有者，独立窗口
+	);
+	
+	// 设置窗口位置，覆盖在目标窗口上
+	..win.setPos(overlayForm.hwnd, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, 
+		0x1/*_SWP_NOSIZE*/ | 0x10/*_SWP_NOACTIVATE*/ | 0x4/*_SWP_NOZORDER*/);
+	
+	// 设置透明度（使用分层窗口）
+	overlayForm.setLayered(255, 0xFF000000/*_COLOR_KEY*/);
+	
+	// 绘制边框
+	drawBorder(overlayForm);
+	
+	// 保存覆盖层句柄
+	overlayWindows[targetHwnd] = overlayForm.hwnd;
+	
+	// 启动定时器，跟踪目标窗口
+	startTracking(targetHwnd, overlayForm);
+	
+	return overlayForm.hwnd;
+}
+
+// 绘制边框
+drawBorder = function(overlayForm){
+	var width = overlayForm.right;
+	var height = overlayForm.bottom;
+	if(width <= 0 || height <= 0) return;
+	
+	// 创建GDI+位图
+	var bmp = ..gdip.bitmap(width, height);
+	var graphics = bmp.getGraphics();
+	
+	// 设置高质量渲染
+	graphics.setSmoothingMode(4/*_GdipSmoothingModeAntiAlias*/);
+	
+	// 创建画笔
+	var pen = ..gdip.pen(BORDER_COLOR, BORDER_WIDTH);
+	
+	// 绘制边框（矩形）
+	var halfWidth = BORDER_WIDTH / 2;
+	graphics.drawRectangle(pen, halfWidth, halfWidth, width - BORDER_WIDTH, height - BORDER_WIDTH);
+	
+	// 设置为窗口背景
+	overlayForm.setLayeredBitmap(bmp);
+	
+	// 清理
+	pen.delete();
+	graphics.delete();
+	bmp.delete();
+}
+
+// 启动窗口跟踪
+startTracking = function(targetHwnd, overlayForm){
+	var timerId = null;
+	
+	var updateOverlay = function(){
+		// 检查目标窗口是否还存在
+		if(!..win.isWindow(targetHwnd)){
+			// 目标窗口已关闭，移除覆盖层
+			removeOverlay(targetHwnd);
+			return;
+		}
+		
+		// 检查目标窗口是否还置顶
+		var styleEx = ..win.getStyleEx(targetHwnd);
+		if(!(styleEx & 0x8/*_WS_EX_TOPMOST*/)){
+			// 目标窗口已取消置顶，移除覆盖层
+			removeOverlay(targetHwnd);
+			return;
+		}
+		
+		// 获取目标窗口位置
+		var rect = ..win.getRect(targetHwnd);
+		if(!rect){
+			removeOverlay(targetHwnd);
+			return;
+		}
+		
+		// 检查目标窗口是否最小化
+		if(..win.isIconic(targetHwnd)){
+			// 最小化时隐藏覆盖层
+			..win.show(overlayForm.hwnd, false);
+			return;
+		}
+		
+		// 显示覆盖层
+		..win.show(overlayForm.hwnd, true);
+		
+		// 更新覆盖层位置和大小
+		var overlayRect = ..win.getRect(overlayForm.hwnd);
+		var width = rect.right - rect.left;
+		var height = rect.bottom - rect.top;
+		
+		// 如果位置或大小变化，更新覆盖层
+		if(!overlayRect || 
+		   overlayRect.left != rect.left || 
+		   overlayRect.top != rect.top ||
+		   overlayRect.right - overlayRect.left != width ||
+		   overlayRect.bottom - overlayRect.top != height){
+			
+			// 更新窗口位置
+			..win.setPos(overlayForm.hwnd, rect.left, rect.top, width, height, 
+				0x10/*_SWP_NOACTIVATE*/ | 0x4/*_SWP_NOZORDER*/);
+			
+			// 更新内部尺寸记录
+			overlayForm.right = width;
+			overlayForm.bottom = height;
+			
+			// 重绘边框
+			drawBorder(overlayForm);
+		}
+	};
+	
+	// 使用窗口定时器
+	timerId = overlayForm.setInterval(updateOverlay, TIMER_INTERVAL);
+	
+	// 保存定时器ID到覆盖层窗口
+	overlayForm._topmostTimerId = timerId;
+	overlayForm._targetHwnd = targetHwnd;
+}
+
+// 移除覆盖层
+removeOverlay = function(targetHwnd){
+	if(!targetHwnd) return false;
+	
+	var overlayHwnd = overlayWindows[targetHwnd];
+	if(!overlayHwnd) return false;
+	
+	overlayWindows[targetHwnd] = null;
+	
+	if(..win.isWindow(overlayHwnd)){
+		..win.close(overlayHwnd);
+	}
+	
+	return true;
+}
+
+// 移除所有覆盖层
+removeAllOverlays = function(){
+	for(targetHwnd in overlayWindows){
+		removeOverlay(targetHwnd);
+	}
+}
+
+// 检查是否有覆盖层
+hasOverlay = function(targetHwnd){
+	if(!targetHwnd) return false;
+	return !!overlayWindows[targetHwnd];
+}
+
+/**intellisense(app.topmostOverlay)
+createOverlay(hwnd) = 为指定窗口创建边框高亮覆盖层\n返回覆盖层窗口句柄
+removeOverlay(hwnd) = 移除指定窗口的覆盖层\n返回是否成功
+removeAllOverlays() = 移除所有覆盖层
+hasOverlay(hwnd) = 检查指定窗口是否有覆盖层
+end intellisense**/
