@@ -1,6 +1,7 @@
 //topmost 置顶窗口管理
 import win;
 import winex;
+import winex.tooltip;
 import config;
 
 namespace app.topmost;
@@ -49,17 +50,21 @@ toggleForegroundTopmost = function(){
 	if(!info) return false;
 	
 	var hwnd = info.hwnd;
+	var title = info.title;
+	if(!#title) title = "窗口";
 	
 	// 如果已经置顶，则取消置顶
 	if(topmostWindows[hwnd]){
 		..win.setTopmost(hwnd, false);
 		topmostWindows[hwnd] = null;
+		..winex.tooltip.balloon("已取消置顶: " + title);
 		return true;
 	}
 	
 	// 设置置顶
 	..win.setTopmost(hwnd, true);
 	topmostWindows[hwnd] = { title = info.title; cls = info.cls };
+	..winex.tooltip.balloon("已置顶: " + title);
 	return true;
 }
 
@@ -85,6 +90,9 @@ removeAllTopmost = function(){
 		}
 	}
 	topmostWindows = {};
+	if(count > 0){
+		..winex.tooltip.balloon("已取消所有置顶（共 " + count + " 个窗口）");
+	}
 	return count;
 }
 
