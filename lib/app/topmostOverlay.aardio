@@ -1,83 +1,69 @@
-//topmostOverlay 置顶窗口边框高亮覆盖层
+//topmostOverlay 置顶窗口视觉标识
+// 使用矩形tooltip跟随窗口标题栏，显示"置顶"标识
 import win;
 import winex;
-import gdip;
-import win.ui.layered;
+import win.ui.tooltip;
 
 namespace app.topmostOverlay;
 
-// 覆盖层窗口表 { 目标hwnd = {form=覆盖层窗体, timerId=定时器ID} }
-var overlayWindows = {};
+// 已标记的窗口表 { 目标hwnd = {tooltip=tooltip对象, timerId=定时器ID} }
+var markedWindows = {};
 
-// 边框配置
-var BORDER_WIDTH = 4;           // 边框宽度（像素）
-var BORDER_COLOR = 0xFFFF6600;  // 边框颜色（ARGB：橙色，醒目）
-var TIMER_INTERVAL = 200;       // 定时检查间隔（毫秒）
+// 标识文本
+var TOPMOST_TEXT = "置顶";
 
-// 创建边框覆盖层窗口
+// 定时检查间隔（毫秒）
+var TIMER_INTERVAL = 200;
+
+// 标记窗口（在标题栏中间显示"置顶"标识）
 createOverlay = function(targetHwnd){
 	if(!targetHwnd) return null;
 	if(!..win.isWindow(targetHwnd)) return null;
 	
-	// 如果已存在覆盖层，先移除
-	if(overlayWindows[targetHwnd]){
+	// 如果已标记，先移除
+	if(markedWindows[targetHwnd]){
 		removeOverlay(targetHwnd);
 	}
 	
-	// 获取目标窗口位置
-	var rect = ..win.getRect(targetHwnd);
-	if(!rect) return null;
+	// 创建矩形tooltip（balloon=false，无尖角）
+	var tip = ..win.ui.tooltip.tracking(, , false, true, true);
+	tip.setInfo(TOPMOST_TEXT);
+	tip.setBkColor(0xFF6600);     // 橙色背景
+	tip.setTextColor(0xFFFFFF);   // 白色文字
 	
-	var width = rect.right - rect.left;
-	var height = rect.bottom - rect.top;
+	// 计算初始位置并显示
+	var x, y = calcPosition(targetHwnd);
+	if(x && y){
+		tip.trackPopup(TOPMOST_TEXT, x, y);
+	}
 	
-	// 创建分层窗口（无边框、置顶、鼠标穿透）
-	var overlayForm = ..win.ui.layered();
-	overlayForm.setPos(rect.left, rect.top, width, height);
+	// 启动定时器，跟随窗口位置
+	var timerId = startTracking(targetHwnd, tip);
 	
-	// 绘制边框
-	drawBorder(overlayForm, width, height);
+	// 保存信息
+	markedWindows[targetHwnd] = { tooltip = tip; timerId = timerId };
 	
-	// 启动定时器，跟踪目标窗口
-	var timerId = startTracking(targetHwnd, overlayForm);
-	
-	// 保存覆盖层信息
-	overlayWindows[targetHwnd] = { form = overlayForm; timerId = timerId };
-	
-	return overlayForm.hwnd;
+	return true;
 }
 
-// 绘制边框
-drawBorder = function(overlayForm, width, height){
-	if(width <= 0 || height <= 0) return;
+// 计算tooltip显示位置（窗口标题栏中间）
+calcPosition = function(targetHwnd){
+	if(!..win.isWindow(targetHwnd)) return null, null;
 	
-	// 创建GDI+位图
-	var bmp = ..gdip.bitmap(width, height);
-	var graphics = bmp.getGraphics();
+	var rect = ..win.getRect(targetHwnd);
+	if(!rect) return null, null;
 	
-	// 设置高质量渲染
-	graphics.setSmoothingMode(4/*_GdipSmoothingModeAntiAlias*/);
+	// 窗口顶部中间位置
+	var x = rect.left + (rect.right - rect.left) / 2;
+	var y = rect.top + 4;  // 标题栏顶部偏移
 	
-	// 创建画笔
-	var pen = ..gdip.pen(BORDER_COLOR, BORDER_WIDTH);
-	
-	// 绘制边框（矩形）
-	var halfWidth = BORDER_WIDTH / 2;
-	graphics.drawRectangle(pen, halfWidth, halfWidth, width - BORDER_WIDTH, height - BORDER_WIDTH);
-	
-	// 设置为分层窗口位图
-	overlayForm.setBitmap(bmp);
-	
-	// 清理
-	pen.delete();
-	graphics.delete();
-	bmp.delete();
+	return x, y;
 }
 
 // 启动窗口跟踪
-startTracking = function(targetHwnd, overlayForm){
+startTracking = function(targetHwnd, tip){
 	
-	var updateOverlay = function(){
+	var updatePosition = function(){
 		// 检查目标窗口是否还存在
 		if(!..win.isWindow(targetHwnd)){
 			removeOverlay(targetHwnd);
@@ -91,85 +77,62 @@ startTracking = function(targetHwnd, overlayForm){
 			return;
 		}
 		
-		// 获取目标窗口位置
-		var rect = ..win.getRect(targetHwnd);
-		if(!rect){
-			removeOverlay(targetHwnd);
-			return;
-		}
-		
 		// 检查目标窗口是否最小化
 		if(..win.isIconic(targetHwnd)){
-			..win.show(overlayForm.hwnd, false);
+			tip.trackPopup(false);
 			return;
 		}
 		
-		// 显示覆盖层
-		..win.show(overlayForm.hwnd, true);
-		
-		// 更新覆盖层位置和大小
-		var overlayRect = ..win.getRect(overlayForm.hwnd);
-		var width = rect.right - rect.left;
-		var height = rect.bottom - rect.top;
-		
-		// 如果位置或大小变化，更新覆盖层
-		if(!overlayRect || 
-		   overlayRect.left != rect.left || 
-		   overlayRect.top != rect.top ||
-		   overlayRect.right - overlayRect.left != width ||
-		   overlayRect.bottom - overlayRect.top != height){
-			
-			// 更新窗口位置
-			overlayForm.setPos(rect.left, rect.top, width, height);
-			
-			// 重绘边框
-			drawBorder(overlayForm, width, height);
+		// 更新位置
+		var x, y = calcPosition(targetHwnd);
+		if(x && y){
+			tip.trackPos(x, y);
+			tip.trackPopup(true);
 		}
 	};
 	
-	// 使用窗口定时器
-	return overlayForm.setInterval(updateOverlay, TIMER_INTERVAL);
+	// 使用全局定时器（不依赖窗口）
+	return ..win.setInterval(updatePosition, TIMER_INTERVAL);
 }
 
-// 移除覆盖层
+// 移除标记
 removeOverlay = function(targetHwnd){
 	if(!targetHwnd) return false;
 	
-	var info = overlayWindows[targetHwnd];
+	var info = markedWindows[targetHwnd];
 	if(!info) return false;
 	
-	overlayWindows[targetHwnd] = null;
+	markedWindows[targetHwnd] = null;
 	
-	if(info.form){
-		// 清除定时器
-		if(info.timerId){
-			info.form.clearInterval(info.timerId);
-		}
-		// 关闭窗口
-		if(..win.isWindow(info.form.hwnd)){
-			..win.close(info.form.hwnd);
-		}
+	if(info.tooltip){
+		// 隐藏tooltip
+		info.tooltip.trackPopup(false);
+	}
+	
+	// 清除定时器
+	if(info.timerId){
+		..win.clearInterval(info.timerId);
 	}
 	
 	return true;
 }
 
-// 移除所有覆盖层
+// 移除所有标记
 removeAllOverlays = function(){
-	for(targetHwnd in overlayWindows){
+	for(targetHwnd in markedWindows){
 		removeOverlay(targetHwnd);
 	}
 }
 
-// 检查是否有覆盖层
+// 检查是否有标记
 hasOverlay = function(targetHwnd){
 	if(!targetHwnd) return false;
-	return !!overlayWindows[targetHwnd];
+	return markedWindows[targetHwnd] !== null;
 }
 
 /**intellisense(app.topmostOverlay)
-createOverlay(hwnd) = 为指定窗口创建边框高亮覆盖层\n返回覆盖层窗口句柄
-removeOverlay(hwnd) = 移除指定窗口的覆盖层\n返回是否成功
-removeAllOverlays() = 移除所有覆盖层
-hasOverlay(hwnd) = 检查指定窗口是否有覆盖层
+createOverlay(hwnd) = 为指定窗口添加置顶视觉标识\n返回是否成功
+removeOverlay(hwnd) = 移除指定窗口的置顶视觉标识\n返回是否成功
+removeAllOverlays() = 移除所有置顶视觉标识
+hasOverlay(hwnd) = 检查指定窗口是否有置顶视觉标识
 end intellisense**/
