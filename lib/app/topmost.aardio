@@ -77,6 +77,34 @@ getForegroundInfo = function(){
 	// 排除无标题且类名为按钮类的窗口
 	if(!#title && ..string.find(cls,"Button")) return null;
 	
+	// 对于 Electron 应用（如企业微信），需要找到真正的主窗口
+	// 检查是否是 Chrome_WidgetWin_1 类（Electron 主窗口类名）
+	if(..string.find(cls, "Chrome_WidgetWin") || ..string.find(cls, "Qt")){
+		// 这已经是主窗口
+		return { hwnd = hwnd; title = title; cls = cls };
+	}
+	
+	// 尝试向上查找主窗口
+	var rootHwnd = hwnd;
+	var maxDepth = 10;
+	var depth = 0;
+	while(depth < maxDepth){
+		var parent = ::User32.GetParent(rootHwnd);
+		if(!parent || parent == desktop) break;
+		rootHwnd = parent;
+		depth++;
+	}
+	
+	// 如果找到了不同的根窗口，检查它是否更合适
+	if(rootHwnd != hwnd && ..win.isVisible(rootHwnd)){
+		var rootTitle = ..winex.getText(rootHwnd);
+		if(!#rootTitle) rootTitle = ..win.getText(rootHwnd);
+		if(#rootTitle > #title){
+			// 使用根窗口
+			return { hwnd = rootHwnd; title = rootTitle; cls = ..win.getClass(rootHwnd) };
+		}
+	}
+	
 	return { hwnd = hwnd; title = title; cls = cls };
 }
 
@@ -87,6 +115,7 @@ toggleForegroundTopmost = function(){
 	
 	var hwnd = info.hwnd;
 	var title = info.title;
+	var cls = info.cls;
 	if(!#title) title = "窗口";
 	
 	// 如果已经置顶，则取消置顶
@@ -110,7 +139,21 @@ toggleForegroundTopmost = function(){
 	::User32.SetWindowPos(hwnd, -1/*_HWND_TOPMOST*/, 0, 0, 0, 0, 
 		0x3/*_SWP_NOMOVE | _SWP_NOSIZE*/ | 0x10/*_SWP_NOACTIVATE*/);
 	
-	// 对于某些特殊窗口（如企业微信），尝试处理所有者窗口
+	// 对于 Electron 应用（企业微信等），需要特殊处理
+	if(..string.find(cls, "Chrome_WidgetWin") || ..string.find(cls, "Qt")){
+		// 尝试通过窗口标题查找所有相关窗口并置顶
+		var topmostHwnds = {};
+		..winex.enum(function(enumHwnd, enumCls, enumTitle){
+			if(..string.find(enumCls, "Chrome_WidgetWin") || ..string.find(enumCls, "Qt")){
+				if(#enumTitle > 0 && ..win.isVisible(enumHwnd)){
+					::User32.SetWindowPos(enumHwnd, -1/*_HWND_TOPMOST*/, 0, 0, 0, 0, 0x13);
+					topmostHwnds[enumHwnd] = true;
+				}
+			}
+		});
+	}
+	
+	// 对于某些特殊窗口，尝试处理所有者窗口
 	var ownerHwnd = ::User32.GetWindow(hwnd, 4/*_GW_OWNER*/);
 	if(ownerHwnd && ownerHwnd != hwnd && ..win.isWindow(ownerHwnd)){
 		::User32.SetWindowPos(ownerHwnd, -1/*_HWND_TOPMOST*/, 0, 0, 0, 0, 0x13);
