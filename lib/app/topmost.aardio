@@ -138,8 +138,8 @@ removeTopmost = function(hwnd){
 		::User32.SetWindowPos(hwnd, -2/*_HWND_NOTOPMOST*/, 0, 0, 0, 0, 0x13);
 		
 		// 方法2: 清除扩展样式
-		var exStyle = ::User32.GetWindowLongPtrW(hwnd, -20/*_GWL_EXSTYLE*/);
-		::User32.SetWindowLongPtrW(hwnd, -20/*_GWL_EXSTYLE*/, exStyle & ~0x8/*_WS_EX_TOPMOST*/);
+		var exStyle = ::User32.GetWindowLong(hwnd, -20/*_GWL_EXSTYLE*/);
+		::User32.SetWindowLong(hwnd, -20/*_GWL_EXSTYLE*/, exStyle & ~0x8/*_WS_EX_TOPMOST*/);
 		
 		// 方法3: 再次调用确保生效
 		::User32.SetWindowPos(hwnd, -2/*_HWND_NOTOPMOST*/, 0, 0, 0, 0, 0x13);
