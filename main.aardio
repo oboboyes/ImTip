@@ -285,12 +285,20 @@ mainForm.btnMemReduce.oncommand = function(id,event){
 	updateMemInfo();
 	
 	// 显示结果
+	var lines = { "内存清理完成" };
 	if(result.freed > 0){
-		mainForm.msgbox("内存清理完成\n释放: " + result.freedFormatted, "ImTip");
+		table.push(lines, "释放可用内存: " + result.freedFormatted);
 	}
-	else {
-		mainForm.msgbox("内存清理完成", "ImTip");
+	elseif(result.currentCleaned){
+		table.push(lines, "已整理当前进程工作集，系统回收结果可能会稍后反映");
 	}
+	if(mode != "normal"){
+		table.push(lines, string.format("已处理进程: %d", result.cleaned));
+		if(result.failed > 0){
+			table.push(lines, string.format("处理失败: %d", result.failed));
+		}
+	}
+	mainForm.msgbox(string.join(lines, "\n"), "ImTip");
 }
 
 // 自动清理配置

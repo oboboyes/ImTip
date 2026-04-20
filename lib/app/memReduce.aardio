@@ -37,6 +37,7 @@ formatSize = function(bytes){
 // 清理当前进程工作集
 cleanCurrentProcess = function(){
 	..collectgarbage("collect");
+	..collectgarbage("collect");
 	return ..process.emptyWorkingSet();
 }
 
@@ -89,10 +90,12 @@ cleanSystem = function(){
 doClean = function(mode = "normal"){
 	var before = getStatus();
 	var cleaned, failed;
+	var currentCleaned = false;
 	
 	if(mode == "deep"){
 		// 深度清理：清理所有进程 + 系统缓存
 		cleaned, failed = cleanAllProcesses();
+		currentCleaned = true;
 		// 尝试清理系统文件缓存
 		try{
 			::Kernel32.SetSystemFileCacheSize(-1, -1, 0);
@@ -103,25 +106,28 @@ doClean = function(mode = "normal"){
 	elseif(mode == "aggressive"){
 		// 激进模式：清理所有进程
 		cleaned, failed = cleanAllProcesses();
+		currentCleaned = true;
 	}
 	else {
 		// 普通模式：只清理当前进程
-		cleanCurrentProcess();
+		currentCleaned = !!cleanCurrentProcess();
 		cleaned = 1;
 		failed = 0;
 	}
 	
 	var after = getStatus();
-	var freed = before.availPhys - after.availPhys;
+	var freed = after.availPhys - before.availPhys;
 	if(freed < 0) freed = 0;
 	
 	return {
+		mode = mode;
 		before = before;
 		after = after;
 		freed = freed;              // 释放的内存
 		freedFormatted = formatSize(freed);
 		cleaned = cleaned;          // 清理的进程数
 		failed = failed;            // 失败的进程数
+		currentCleaned = currentCleaned;
 	};
 }
 
