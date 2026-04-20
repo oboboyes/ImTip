@@ -25,7 +25,7 @@ wndBrowser={cls="custom";text="自定义控件";left=5;top=27;right=753;bottom=4
 )
 /*}}*/
 
-config.aiChat.enableAutoSave(false);
+try{ config.aiChat.enableAutoSave(false); }
 
 if(config.aiChat.itemNames){
 	winform.cmbAgent.items = config.aiChat.itemNames;

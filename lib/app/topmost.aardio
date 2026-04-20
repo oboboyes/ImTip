@@ -14,6 +14,36 @@ var topmostWindows = {};
 // 热键ID
 var hotkeyId = null;
 
+// 为置顶窗口设置 imeBar 固定定位（使用窗口位置而非鼠标位置）
+setupImeBarFix = function(){
+	if(!..imeBar) return;
+	
+	// 保存原有的 onImeForegroundWindow 回调
+	var prevOnImeForegroundWindow = ..imeBar.onImeForegroundWindow;
+	
+	..imeBar.onImeForegroundWindow = function(hwnd, cls){
+		// 先调用原有回调
+		if(prevOnImeForegroundWindow){
+			var result = prevOnImeForegroundWindow(hwnd, cls);
+			if(result === false) return false;
+		}
+		
+		// 检查当前窗口是否是置顶窗口
+		if(isTopmost(hwnd)){
+			// 为置顶窗口设置自定义光标获取：使用窗口左上角位置
+			..imeBar.getCaretEx = function(hwndForeground){
+				if(!..win.isWindow(hwndForeground)) return null, null;
+				var x,y = ..win.getPos(hwndForeground, true);
+				if(!x && !y) return null, null;
+				var caret = ::RECT(x, y, 0, 0);
+				caret.hwnd = hwndForeground;
+				return caret, hwndForeground;
+			}
+		}
+		// 非置顶窗口不设置 getCaretEx，使用默认逻辑
+	}
+}
+
 // 获取前台窗口信息
 getForegroundInfo = function(){
 	var hwnd = ..win.getForeground();
@@ -207,4 +237,5 @@ cleanInvalidWindows() = 清理已不存在的窗口
 registerHotkey(winform) = 注册置顶热键\n返回是否成功
 unregisterHotkey(winform) = 注销置顶热键
 hotkeyToString(mod,vk) = 热键值转可读字符串
+setupImeBarFix() = 为置顶窗口设置 imeBar 固定定位\n使提示栏固定在置顶窗口位置而非跟随鼠标
 end intellisense**/
