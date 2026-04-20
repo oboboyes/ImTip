@@ -49,6 +49,24 @@ setupImeBarFix = function(){
 	}
 }
 
+// 企业微信这类 Electron/Qt 应用常把焦点放在子窗口上，置顶时需要落到根窗口。
+resolveTopLevelWindow = function(hwnd){
+	if(!hwnd || !..win.isWindow(hwnd)) return null;
+	
+	var desktop = ::User32.GetDesktopWindow();
+	var rootOwner = ::User32.GetAncestor(hwnd, 3/*_GA_ROOTOWNER*/);
+	if(rootOwner && rootOwner != desktop && ..win.isWindow(rootOwner) && ..win.isVisible(rootOwner)){
+		hwnd = rootOwner;
+	}
+	
+	var ownerHwnd = ::User32.GetWindow(hwnd, 4/*_GW_OWNER*/);
+	if(ownerHwnd && ownerHwnd != hwnd && ..win.isWindow(ownerHwnd) && ..win.isVisible(ownerHwnd)){
+		hwnd = ownerHwnd;
+	}
+	
+	return hwnd;
+}
+
 // 获取前台窗口信息
 getForegroundInfo = function(){
 	var hwnd = ..win.getForeground();
@@ -64,6 +82,10 @@ getForegroundInfo = function(){
 	// 排除ImTip主窗口
 	if(..mainForm && hwnd == ..mainForm.hwnd) return null;
 	
+	hwnd = resolveTopLevelWindow(hwnd);
+	if(!hwnd) return null;
+	if(..mainForm && hwnd == ..mainForm.hwnd) return null;
+	
 	// 获取窗口标题
 	var title = ..winex.getText(hwnd);
 	if(!#title) title = ..win.getText(hwnd);
@@ -76,34 +98,6 @@ getForegroundInfo = function(){
 	
 	// 排除无标题且类名为按钮类的窗口
 	if(!#title && ..string.find(cls,"Button")) return null;
-	
-	// 对于 Electron 应用（如企业微信），需要找到真正的主窗口
-	// 检查是否是 Chrome_WidgetWin_1 类（Electron 主窗口类名）
-	if(..string.find(cls, "Chrome_WidgetWin") || ..string.find(cls, "Qt")){
-		// 这已经是主窗口
-		return { hwnd = hwnd; title = title; cls = cls };
-	}
-	
-	// 尝试向上查找主窗口
-	var rootHwnd = hwnd;
-	var maxDepth = 10;
-	var depth = 0;
-	while(depth < maxDepth){
-		var parent = ::User32.GetParent(rootHwnd);
-		if(!parent || parent == desktop) break;
-		rootHwnd = parent;
-		depth++;
-	}
-	
-	// 如果找到了不同的根窗口，检查它是否更合适
-	if(rootHwnd != hwnd && ..win.isVisible(rootHwnd)){
-		var rootTitle = ..winex.getText(rootHwnd);
-		if(!#rootTitle) rootTitle = ..win.getText(rootHwnd);
-		if(#rootTitle > #title){
-			// 使用根窗口
-			return { hwnd = rootHwnd; title = rootTitle; cls = ..win.getClass(rootHwnd) };
-		}
-	}
 	
 	return { hwnd = hwnd; title = title; cls = cls };
 }
