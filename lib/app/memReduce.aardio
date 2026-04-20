@@ -135,6 +135,6 @@ doClean = function(mode = "normal"){
 getStatus() = 获取内存状态\n返回包含 memoryLoad, totalPhys, availPhys 等字段的对象
 formatSize(.(字节数) = 格式化内存大小为可读字符串
 cleanCurrentProcess() = 清理当前进程工作集
-cleanAllProcesses() = 清理所有进程工作集（需要管理员权限）\n返回清理成功数和失败数
-doClean(.(模式) = 执行内存清理\n模式可选 "normal"(普通)、"deep"(深度) 或 "aggressive"(激进)\n返回清理结果对象
+cleanAllProcesses() = 清理所有进程工作集（需要管理员权限）,返回清理成功数和失败数
+doClean(.(模式) = 执行内存清理\n模式可选 "normal"(普通)、"deep"(深度) 或 "aggressive"(激进)，返回清理结果对象
 end intellisense**/
