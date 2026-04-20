@@ -32,22 +32,23 @@ generateIcon = function(number, width = 16, height = 16){
 	// 创建画刷
 	var brush = ..gdip.solidBrush(bgColor);
 	
-	// 绘制背景（圆角矩形）
-	g.fillRoundRect(brush, 0, 0, width, height, 3);
+	// 绘制背景（圆角矩形，增大圆角半径）
+	g.fillRoundRect(brush, 0, 0, width, height, 4);
 	
 	// 绘制数字
 	var fontFamily = ..gdip.family("Arial");
-	var font = ..gdip.font(fontFamily, 9, 1/*_GdipFontStyleBold*/);
+	var font = ..gdip.font(fontFamily, 10, 1/*_GdipFontStyleBold*/);
 	var textBrush = ..gdip.solidBrush(0xFFFFFFFF);  // 白色文字
 	var format = ..gdip.stringformat();
 	
-	var text = tostring(number);
-	var layoutRect = ::RECTF(0, 0, width, height);
-	var textSize = g.measureString(text, font, layoutRect, format);
+	// 设置文字居中对齐（直接设置属性）
+	format.align = 1/*_GdipStringAlignmentCenter*/;
+	format.lineAlign = 1/*_GdipStringAlignmentCenter*/;
 	
-	var x = (width - textSize.width) / 2;
-	var y = (height - textSize.height) / 2 - 1;
-	var textRect = ::RECTF(x, y, width, height);
+	var text = tostring(number);
+	
+	// 使用整个图标区域作为文字布局区域，让format自动居中
+	var textRect = ::RECTF(0, 0, width, height);
 	
 	g.drawString(text, font, textRect, format, textBrush);
 	

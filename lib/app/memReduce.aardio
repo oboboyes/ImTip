@@ -90,7 +90,17 @@ doClean = function(mode = "normal"){
 	var before = getStatus();
 	var cleaned, failed;
 	
-	if(mode == "aggressive"){
+	if(mode == "deep"){
+		// 深度清理：清理所有进程 + 系统缓存
+		cleaned, failed = cleanAllProcesses();
+		// 尝试清理系统文件缓存
+		try{
+			::Kernel32.SetSystemFileCacheSize(-1, -1, 0);
+		}
+		catch(e){
+		}
+	}
+	elseif(mode == "aggressive"){
 		// 激进模式：清理所有进程
 		cleaned, failed = cleanAllProcesses();
 	}
@@ -120,5 +130,5 @@ getStatus() = 获取内存状态\n返回包含 memoryLoad, totalPhys, availPhys 
 formatSize(.(字节数) = 格式化内存大小为可读字符串
 cleanCurrentProcess() = 清理当前进程工作集
 cleanAllProcesses() = 清理所有进程工作集（需要管理员权限）\n返回清理成功数和失败数
-doClean(.(模式) = 执行内存清理\n模式可选 "normal"(普通) 或 "aggressive"(激进)\n返回清理结果对象
+doClean(.(模式) = 执行内存清理\n模式可选 "normal"(普通)、"deep"(深度) 或 "aggressive"(激进)\n返回清理结果对象
 end intellisense**/

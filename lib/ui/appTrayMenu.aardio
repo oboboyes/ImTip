@@ -15,7 +15,7 @@ class appTrayMenu{
 		
 		popmenu.add();//分隔线 
 		
-		var id = popmenu.add('启用输入跟踪提示\tCtrl+单击托盘',function(id){
+		var id = popmenu.add('启用输入跟踪提示',function(id){
 			..config.setting.imeBarDisabled = !..imeBar.paused; 
 			..imeBar.imeWatch(!..config.setting.imeBarDisabled);
 			..mainForm.chkImeBarDisabled.checked = !..config.setting.imeBarDisabled;
@@ -23,6 +23,31 @@ class appTrayMenu{
 		});
 		popmenu.check(id,!..imeBar.paused,0/*_MF_BYCOMMAND*/);
 		 
+		popmenu.add();//分隔线 
+		
+		// 输入法设置菜单
+		import tsfInput;
+		var inputStatus = tsfInput.getStatus();
+		
+		var idEn = popmenu.add('启用英文键盘',function(id){
+			tsfInput.enableUsKeyboard(!inputStatus.en);
+		});
+		popmenu.check(idEn,inputStatus.en,0/*_MF_BYCOMMAND*/);
+		
+		var idPinyin = popmenu.add('启用微软拼音',function(id){
+			tsfInput.enablePinyin(!inputStatus.pinyin);
+		});
+		popmenu.check(idPinyin,inputStatus.pinyin,0/*_MF_BYCOMMAND*/);
+		
+		var idWubi = popmenu.add('启用微软五笔',function(id){
+			tsfInput.enableWubi(!inputStatus.wubi);
+		});
+		popmenu.check(idWubi,inputStatus.wubi,0/*_MF_BYCOMMAND*/);
+		
+		popmenu.add('打开系统输入法设置',function(id){
+			..process.execute("ms-settings:keyboard");
+		});
+		
 		popmenu.add();//分隔线 
 		
 		// 内存优化菜单

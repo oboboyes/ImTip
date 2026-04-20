@@ -97,8 +97,33 @@ toggleForegroundTopmost = function(){
 		return true;
 	}
 	
-	// 设置置顶
-	..win.setTopmost(hwnd, true);
+	// 设置置顶 - 使用多种方法确保生效
+	// 方法1: 标准置顶
+	::User32.SetWindowPos(hwnd, -1/*_HWND_TOPMOST*/, 0, 0, 0, 0, 
+		0x3/*_SWP_NOMOVE | _SWP_NOSIZE*/ | 0x10/*_SWP_NOACTIVATE*/ | 0x40/*_SWP_SHOWWINDOW*/);
+	
+	// 方法2: 设置扩展样式
+	var exStyle = ::User32.GetWindowLongPtrW(hwnd, -20/*_GWL_EXSTYLE*/);
+	::User32.SetWindowLongPtrW(hwnd, -20/*_GWL_EXSTYLE*/, exStyle | 0x8/*_WS_EX_TOPMOST*/);
+	
+	// 方法3: 再次调用 SetWindowPos 确保生效
+	::User32.SetWindowPos(hwnd, -1/*_HWND_TOPMOST*/, 0, 0, 0, 0, 
+		0x3/*_SWP_NOMOVE | _SWP_NOSIZE*/ | 0x10/*_SWP_NOACTIVATE*/);
+	
+	// 对于某些特殊窗口（如企业微信），尝试处理所有者窗口
+	var ownerHwnd = ::User32.GetWindow(hwnd, 4/*_GW_OWNER*/);
+	if(ownerHwnd && ownerHwnd != hwnd && ..win.isWindow(ownerHwnd)){
+		::User32.SetWindowPos(ownerHwnd, -1/*_HWND_TOPMOST*/, 0, 0, 0, 0, 0x13);
+	}
+	
+	// 尝试处理父窗口
+	var parentHwnd = ::User32.GetParent(hwnd);
+	if(parentHwnd && parentHwnd != hwnd && parentHwnd != ::User32.GetDesktopWindow()){
+		if(..win.isWindow(parentHwnd)){
+			::User32.SetWindowPos(parentHwnd, -1/*_HWND_TOPMOST*/, 0, 0, 0, 0, 0x13);
+		}
+	}
+	
 	topmostWindows[hwnd] = { title = info.title; cls = info.cls };
 	try{ ..app.topmostOverlay.createOverlay(hwnd); }
 	return true;
@@ -109,7 +134,30 @@ removeTopmost = function(hwnd){
 	if(!hwnd) return false;
 	
 	if(topmostWindows[hwnd]){
-		..win.setTopmost(hwnd, false);
+		// 方法1: 标准取消置顶
+		::User32.SetWindowPos(hwnd, -2/*_HWND_NOTOPMOST*/, 0, 0, 0, 0, 0x13);
+		
+		// 方法2: 清除扩展样式
+		var exStyle = ::User32.GetWindowLongPtrW(hwnd, -20/*_GWL_EXSTYLE*/);
+		::User32.SetWindowLongPtrW(hwnd, -20/*_GWL_EXSTYLE*/, exStyle & ~0x8/*_WS_EX_TOPMOST*/);
+		
+		// 方法3: 再次调用确保生效
+		::User32.SetWindowPos(hwnd, -2/*_HWND_NOTOPMOST*/, 0, 0, 0, 0, 0x13);
+		
+		// 同时取消所有者窗口的置顶
+		var ownerHwnd = ::User32.GetWindow(hwnd, 4/*_GW_OWNER*/);
+		if(ownerHwnd && ownerHwnd != hwnd && ..win.isWindow(ownerHwnd)){
+			::User32.SetWindowPos(ownerHwnd, -2/*_HWND_NOTOPMOST*/, 0, 0, 0, 0, 0x13);
+		}
+		
+		// 同时取消父窗口的置顶
+		var parentHwnd = ::User32.GetParent(hwnd);
+		if(parentHwnd && parentHwnd != hwnd && parentHwnd != ::User32.GetDesktopWindow()){
+			if(..win.isWindow(parentHwnd)){
+				::User32.SetWindowPos(parentHwnd, -2/*_HWND_NOTOPMOST*/, 0, 0, 0, 0, 0x13);
+			}
+		}
+		
 		topmostWindows[hwnd] = null;
 		try{ ..app.topmostOverlay.removeOverlay(hwnd); }
 		return true;
