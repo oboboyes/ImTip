@@ -1,21 +1,21 @@
 //topmostOverlay 置顶窗口视觉标识
-// 使用矩形tooltip跟随窗口标题栏，显示"置顶"标识
+// 使用矩形tooltip跟随窗口标题栏，显示图钉表情标识
 import win;
 import winex;
 import win.ui.tooltip;
 
 namespace app.topmostOverlay;
 
-// 已标记的窗口表 { 目标hwnd = {tooltip=tooltip对象, timerId=定时器ID} }
+// 已标记的窗口表 { 目标hwnd = {tooltip=tooltip对象, timerId=定时器ID, lastX=上次X, lastY=上次Y, hidden=是否隐藏} }
 var markedWindows = {};
 
-// 标识文本
-var TOPMOST_TEXT = "置顶";
+// 标识文本（图钉表情）
+var TOPMOST_TEXT = "📌";
 
 // 定时检查间隔（毫秒）
 var TIMER_INTERVAL = 200;
 
-// 标记窗口（在标题栏中间显示"置顶"标识）
+// 标记窗口（在标题栏中间显示图钉标识）
 createOverlay = function(targetHwnd){
 	if(!targetHwnd) return null;
 	if(!..win.isWindow(targetHwnd)) return null;
@@ -27,9 +27,8 @@ createOverlay = function(targetHwnd){
 	
 	// 创建矩形tooltip（balloon=false，无尖角）
 	var tip = ..win.ui.tooltip.tracking(, , false, true, true);
-	tip.setInfo(TOPMOST_TEXT);
-	tip.setBkColor(0xFF6600);     // 橙色背景
-	tip.setTextColor(0xFFFFFF);   // 白色文字
+	tip.setBkColor(0x00000000);     // 透明背景
+	tip.setTextColor(0xFFFF6600);   // 橙色图钉
 	
 	// 计算初始位置并显示
 	var x, y = calcPosition(targetHwnd);
@@ -40,8 +39,8 @@ createOverlay = function(targetHwnd){
 	// 启动定时器，跟随窗口位置
 	var timerId = startTracking(targetHwnd, tip);
 	
-	// 保存信息
-	markedWindows[targetHwnd] = { tooltip = tip; timerId = timerId };
+	// 保存信息（含上次位置，用于判断是否需要更新）
+	markedWindows[targetHwnd] = { tooltip = tip; timerId = timerId; lastX = x; lastY = y; hidden = false };
 	
 	return true;
 }
@@ -64,6 +63,9 @@ calcPosition = function(targetHwnd){
 startTracking = function(targetHwnd, tip){
 	
 	var updatePosition = function(){
+		var info = markedWindows[targetHwnd];
+		if(!info) return;
+		
 		// 检查目标窗口是否还存在
 		if(!..win.isWindow(targetHwnd)){
 			removeOverlay(targetHwnd);
@@ -79,16 +81,30 @@ startTracking = function(targetHwnd, tip){
 		
 		// 检查目标窗口是否最小化
 		if(..win.isIconic(targetHwnd)){
-			tip.trackPopup(false);
+			if(!info.hidden){
+				tip.trackPopup(false);
+				info.hidden = true;
+			}
 			return;
 		}
 		
-		// 更新位置
+		// 计算当前位置
 		var x, y = calcPosition(targetHwnd);
-		if(x && y){
-			tip.trackPos(x, y);
-			tip.trackPopup(true);
+		if(!x || !y) return;
+		
+		// 位置未变化且未隐藏时，不需要更新（避免闪动）
+		if(!info.hidden && info.lastX == x && info.lastY == y){
+			return;
 		}
+		
+		// 位置变化或从隐藏恢复，更新位置
+		tip.trackPos(x, y);
+		if(info.hidden){
+			tip.trackPopup(true);
+			info.hidden = false;
+		}
+		info.lastX = x;
+		info.lastY = y;
 	};
 	
 	// 使用全局定时器（不依赖窗口）

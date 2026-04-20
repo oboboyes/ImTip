@@ -1,7 +1,6 @@
 //topmost 置顶窗口管理
 import win;
 import winex;
-import winex.tooltip;
 import config;
 import app.topmostOverlay;
 
@@ -20,6 +19,9 @@ setupImeBarFix = function(){
 	
 	// 保存原有的 onImeForegroundWindow 回调
 	var prevOnImeForegroundWindow = ..imeBar.onImeForegroundWindow;
+	
+	// 保存原有的 getCaretEx
+	var prevGetCaretEx = ..imeBar.getCaretEx;
 	
 	..imeBar.onImeForegroundWindow = function(hwnd, cls){
 		// 先调用原有回调
@@ -40,7 +42,10 @@ setupImeBarFix = function(){
 				return caret, hwndForeground;
 			}
 		}
-		// 非置顶窗口不设置 getCaretEx，使用默认逻辑
+		else {
+			// 非置顶窗口恢复原有的 getCaretEx
+			..imeBar.getCaretEx = prevGetCaretEx;
+		}
 	}
 }
 
@@ -88,16 +93,14 @@ toggleForegroundTopmost = function(){
 	if(topmostWindows[hwnd]){
 		..win.setTopmost(hwnd, false);
 		topmostWindows[hwnd] = null;
-		..app.topmostOverlay.removeOverlay(hwnd);
-		..winex.tooltip.balloon("已取消置顶: " + title);
+		try{ ..app.topmostOverlay.removeOverlay(hwnd); }
 		return true;
 	}
 	
 	// 设置置顶
 	..win.setTopmost(hwnd, true);
 	topmostWindows[hwnd] = { title = info.title; cls = info.cls };
-	..app.topmostOverlay.createOverlay(hwnd);
-	..winex.tooltip.balloon("已置顶: " + title);
+	try{ ..app.topmostOverlay.createOverlay(hwnd); }
 	return true;
 }
 
@@ -106,12 +109,9 @@ removeTopmost = function(hwnd){
 	if(!hwnd) return false;
 	
 	if(topmostWindows[hwnd]){
-		var title = topmostWindows[hwnd].title;
-		if(!#title) title = "窗口";
 		..win.setTopmost(hwnd, false);
 		topmostWindows[hwnd] = null;
-		..app.topmostOverlay.removeOverlay(hwnd);
-		..winex.tooltip.balloon("已取消置顶: " + title);
+		try{ ..app.topmostOverlay.removeOverlay(hwnd); }
 		return true;
 	}
 	return false;
@@ -123,14 +123,11 @@ removeAllTopmost = function(){
 	for(hwnd, info in topmostWindows){
 		if(hwnd && ..win.isWindow(hwnd)){
 			..win.setTopmost(hwnd, false);
-			..app.topmostOverlay.removeOverlay(hwnd);
+			try{ ..app.topmostOverlay.removeOverlay(hwnd); }
 			count++;
 		}
 	}
 	topmostWindows = {};
-	if(count > 0){
-		..winex.tooltip.balloon("已取消所有置顶（共 " + count + " 个窗口）");
-	}
 	return count;
 }
 
