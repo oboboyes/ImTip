@@ -25,6 +25,16 @@ class appTrayMenu{
 		 
 		popmenu.add();//分隔线 
 		
+		// 内存优化菜单
+		import app.memReduce;
+		var memInfo = app.memReduce.getStatus();
+		popmenu.add('内存清理 (' + memInfo.memoryLoad + '%)',function(id){
+			var result = app.memReduce.doClean("normal");
+			if(..mainForm.updateMemInfo) ..mainForm.updateMemInfo();
+		});
+		
+		popmenu.add();//分隔线 
+		
 		// 置顶窗口菜单
 		import app.topmost;
 		var topmostCount = app.topmost.getTopmostCount();

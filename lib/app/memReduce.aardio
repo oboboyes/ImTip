@@ -1,0 +1,124 @@
+//memReduce 内存清理功能
+// 参照 memreduct 项目实现内存优化功能
+import sys.mem;
+import process;
+
+namespace app.memReduce;
+
+// 获取内存状态
+getStatus = function(){
+	var info = ..sys.mem.getStatus();
+	return {
+		memoryLoad = info.memoryLoad;           // 内存使用百分比
+		totalPhys = info.totalPhys;             // 总物理内存
+		availPhys = info.availPhys;             // 可用物理内存
+		totalPhysFormatted = info.totalPhysFormatted;
+		availPhysFormatted = info.availPhysFormatted;
+		usedPhys = info.totalPhys - info.availPhys;  // 已用物理内存
+	};
+}
+
+// 格式化内存大小
+formatSize = function(bytes){
+	if(bytes >= 1024 * 1024 * 1024){
+		return ..string.format("%.1f GB", bytes / (1024.0 * 1024 * 1024));
+	}
+	elseif(bytes >= 1024 * 1024){
+		return ..string.format("%.1f MB", bytes / (1024.0 * 1024));
+	}
+	elseif(bytes >= 1024){
+		return ..string.format("%.1f KB", bytes / 1024.0);
+	}
+	else {
+		return ..string.format("%d B", bytes);
+	}
+}
+
+// 清理当前进程工作集
+cleanCurrentProcess = function(){
+	..collectgarbage("collect");
+	return ..process.emptyWorkingSet();
+}
+
+// 清理所有进程工作集（需要管理员权限）
+cleanAllProcesses = function(){
+	var cleaned = 0;
+	var failed = 0;
+	
+	// 遍历所有进程
+	for entry in ..process.each() {
+		var pid = entry.th32ProcessID;
+		if(pid && pid != ..process.getId()){
+			var prcs = ..process(pid, 0x1F0FFF/*_PROCESS_ALL_ACCESS*/);
+			if(prcs){
+				try{
+					if(prcs.emptyWorkingSet()){
+						cleaned++;
+					}
+				}
+				catch(e){
+					failed++;
+				}
+				prcs.free();
+			}
+		}
+	}
+	
+	// 最后清理当前进程
+	cleanCurrentProcess();
+	
+	return cleaned, failed;
+}
+
+// 清理系统工作集（包括修改页面文件）
+cleanSystem = function(){
+	// 清理所有进程
+	var cleaned, failed = cleanAllProcesses();
+	
+	// 尝试清理系统文件缓存
+	try{
+		::Kernel32.SetSystemFileCacheSize(-1, -1, 0);
+	}
+	catch(e){
+	}
+	
+	return cleaned, failed;
+}
+
+// 执行内存清理
+doClean = function(mode = "normal"){
+	var before = getStatus();
+	var cleaned, failed;
+	
+	if(mode == "aggressive"){
+		// 激进模式：清理所有进程
+		cleaned, failed = cleanAllProcesses();
+	}
+	else {
+		// 普通模式：只清理当前进程
+		cleanCurrentProcess();
+		cleaned = 1;
+		failed = 0;
+	}
+	
+	var after = getStatus();
+	var freed = before.availPhys - after.availPhys;
+	if(freed < 0) freed = 0;
+	
+	return {
+		before = before;
+		after = after;
+		freed = freed;              // 释放的内存
+		freedFormatted = formatSize(freed);
+		cleaned = cleaned;          // 清理的进程数
+		failed = failed;            // 失败的进程数
+	};
+}
+
+/**intellisense(app.memReduce)
+getStatus() = 获取内存状态\n返回包含 memoryLoad, totalPhys, availPhys 等字段的对象
+formatSize(.(字节数) = 格式化内存大小为可读字符串
+cleanCurrentProcess() = 清理当前进程工作集
+cleanAllProcesses() = 清理所有进程工作集（需要管理员权限）\n返回清理成功数和失败数
+doClean(.(模式) = 执行内存清理\n模式可选 "normal"(普通) 或 "aggressive"(激进)\n返回清理结果对象
+end intellisense**/

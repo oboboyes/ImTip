@@ -1,0 +1,81 @@
+//trayIcon 托盘图标生成器
+// 动态生成显示数字的托盘图标
+import win;
+import gdip.bitmap;
+import gdip.graphics;
+import gdip.solidBrush;
+import gdip.family;
+import gdip.font;
+import gdip.path;
+import gdip.stringformat;
+
+namespace app.trayIcon;
+
+// 生成显示数字的图标
+generateIcon = function(number, width = 16, height = 16){
+	// 创建位图
+	var bitmap = ..gdip.bitmap(width, height);
+	var g = ..gdip.graphics(bitmap);
+	
+	// 设置背景色（根据数值变化）
+	var bgColor;
+	if(number < 50){
+		bgColor = 0xFF4CAF50;  // 绿色 - 低内存使用
+	}
+	elseif(number < 75){
+		bgColor = 0xFFFF9800;  // 橙色 - 中等内存使用
+	}
+	else {
+		bgColor = 0xFFF44336;  // 红色 - 高内存使用
+	}
+	
+	// 创建画刷
+	var brush = ..gdip.solidBrush(bgColor);
+	
+	// 绘制背景（圆角矩形）
+	g.fillRoundRect(brush, 0, 0, width, height, 3);
+	
+	// 绘制数字
+	var fontFamily = ..gdip.family("Arial");
+	var font = ..gdip.font(fontFamily, 9, 1/*_GdipFontStyleBold*/);
+	var textBrush = ..gdip.solidBrush(0xFFFFFFFF);  // 白色文字
+	var format = ..gdip.stringformat();
+	
+	var text = tostring(number);
+	var layoutRect = ::RECTF(0, 0, width, height);
+	var textSize = g.measureString(text, font, layoutRect, format);
+	
+	var x = (width - textSize.width) / 2;
+	var y = (height - textSize.height) / 2 - 1;
+	var textRect = ::RECTF(x, y, width, height);
+	
+	g.drawString(text, font, textRect, format, textBrush);
+	
+	// 转换为图标句柄
+	var hIcon = bitmap.copyHandle("icon");
+	
+	// 释放资源
+	brush.delete();
+	textBrush.delete();
+	font.delete();
+	fontFamily.delete();
+	format.delete();
+	g.delete();
+	bitmap.delete();
+	
+	return hIcon;
+}
+
+// 更新托盘图标
+updateTrayIcon = function(tray, number){
+	var hIcon = generateIcon(number);
+	if(hIcon){
+		tray.setIcon(hIcon);
+		::User32.DestroyIcon(hIcon);
+	}
+}
+
+/**intellisense(app.trayIcon)
+generateIcon(.(数字) = 生成显示数字的图标句柄
+updateTrayIcon(.(托盘对象,数字) = 更新托盘图标显示数字
+end intellisense**/

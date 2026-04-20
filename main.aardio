@@ -17,21 +17,25 @@ import win.ui.atom;
 import win.dlg.message;
 import fonts.fontAwesomeSub;
 /*DSG{{*/
-mainForm = win.form(text="ImTip 8.4 - 智能桌面助手";right=336;bottom=358;bgcolor=0xF5F5F5;border="none";max=false;min=false)
+mainForm = win.form(text="ImTip 8.4 - 智能桌面助手";right=336;bottom=440;bgcolor=0xF5F5F5;border="none";max=false;min=false)
 mainForm.add(
-btnClose={cls="plus";text="×";left=309;top=0;right=337;bottom=28;color=0xFFFFFF;dr=1;dt=1;font=LOGFONT(h=-22);notify=1;z=11};
-btnImTip={cls="plus";text="配置";left=216;top=143;right=286;bottom=171;bgcolor=0x6BA800;border={radius=4};color=0xFFFFFF;dl=1;dt=1;font=LOGFONT(h=-13);notify=1;z=8};
-cardImeTip={cls="plus";left=20;top=80;right=316;bottom=183;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};dl=1;dr=1;dt=1;z=2};
-cardSystem={cls="plus";left=20;top=194;right=316;bottom=269;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};db=1;dl=1;dr=1;z=1};
-cardTopmost={cls="plus";left=23;top=284;right=319;bottom=352;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};db=1;dl=1;dr=1;z=3};
-chkImeBarDisabled={cls="plus";text="启用";left=97;top=149;right=177;bottom=169;align="left";bgcolor=0xFFFFFF;dl=1;dt=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=7};
-chkSysRun={cls="plus";text="开机启动";left=97;top=235;right=197;bottom=260;align="left";bgcolor=0xFFFFFF;db=1;dl=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=10};
-chkTopmost={cls="plus";text="置顶窗口";left=100;top=322;right=200;bottom=342;align="left";bgcolor=0xFFFFFF;db=1;dl=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=12};
-hotkeyTopmost={cls="hotkey";left=220;top=321;right=300;bottom=341;db=1;dl=1;edge=1;z=13};
-lblImeTipDesc={cls="static";text="智能显示输入法状态，支持多种窗口类型";left=53;top=120;right=297;bottom=160;bgcolor=0xFFFFFF;color=0x666666;dl=1;dt=1;notify=1;z=6};
+btnClose={cls="plus";text="×";left=309;top=0;right=337;bottom=28;color=0xFFFFFF;dr=1;dt=1;font=LOGFONT(h=-22);notify=1;z=10};
+btnImTip={cls="plus";text="配置";left=216;top=112;right=286;bottom=140;bgcolor=0x6BA800;border={radius=4};color=0xFFFFFF;dl=1;dt=1;font=LOGFONT(h=-13);notify=1;z=7};
+btnMemReduce={cls="plus";text="清理";left=216;top=219;right=286;bottom=247;bgcolor=0x2196F3;border={radius=4};color=0xFFFFFF;db=1;dl=1;font=LOGFONT(h=-13);notify=1;z=15};
+cardImeTip={cls="plus";left=20;top=80;right=316;bottom=154;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};dl=1;dr=1;dt=1;z=2};
+cardMemReduce={cls="plus";left=20;top=175;right=316;bottom=256;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};dl=1;dr=1;z=14};
+cardSystem={cls="plus";left=20;top=286;right=316;bottom=361;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};db=1;dl=1;dr=1;z=1};
+cardTopmost={cls="plus";left=20;top=373;right=316;bottom=440;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};db=1;dl=1;dr=1;z=3};
+chkImeBarDisabled={cls="plus";text="启用";left=97;top=118;right=177;bottom=138;align="left";bgcolor=0xFFFFFF;dl=1;dt=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=6};
+chkSysRun={cls="plus";text="开机启动";left=97;top=327;right=300;bottom=352;align="left";bgcolor=0xFFFFFF;db=1;dl=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=9};
+chkTopmost={cls="plus";text="置顶窗口";left=100;top=408;right=200;bottom=428;align="left";bgcolor=0xFFFFFF;db=1;dl=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=11};
+hotkeyTopmost={cls="hotkey";left=220;top=407;right=300;bottom=427;db=1;dl=1;edge=1;z=12};
 lblImeTipTitle={cls="plus";text="输入提示";left=40;top=85;right=230;bottom=110;align="left";bgcolor=0xFFFFFF;color=0x333333;dl=1;dt=1;font=LOGFONT(h=-16;weight=600);z=5};
-lblSystemTitle={cls="plus";text="系统选项";left=40;top=201;right=150;bottom=226;align="left";bgcolor=0xFFFFFF;color=0x333333;db=1;dl=1;font=LOGFONT(h=-16;weight=600);z=9};
-plus={cls="plus";text="置顶窗口";left=40;top=290;right=150;bottom=315;align="left";bgcolor=0xFFFFFF;color=0x333333;db=1;dl=1;font=LOGFONT(h=-16;weight=600);z=14};
+lblMemInfo={cls="static";text="内存: --";left=97;top=216;right=211;bottom=237;bgcolor=0xFFFFFF;color=0x666666;dl=1;dt=1;z=16};
+progressMem={cls="plus";left=97;top=237;right=211;bottom=243;bgcolor=0xE0E0E0;dl=1;dt=1;forecolor=0x2196F3;z=18};
+lblMemReduceTitle={cls="plus";text="内存优化";left=40;top=182;right=150;bottom=207;align="left";bgcolor=0xFFFFFF;color=0x333333;dl=1;dt=1;font=LOGFONT(h=-16;weight=600);z=17};
+lblSystemTitle={cls="plus";text="系统选项";left=40;top=293;right=150;bottom=318;align="left";bgcolor=0xFFFFFF;color=0x333333;db=1;dl=1;font=LOGFONT(h=-16;weight=600);z=8};
+plus={cls="plus";text="置顶窗口";left=40;top=379;right=150;bottom=404;align="left";bgcolor=0xFFFFFF;color=0x333333;db=1;dl=1;font=LOGFONT(h=-16;weight=600);z=13};
 titleBar={cls="bk";text="    IᵐTⁱᵖ 智能桌面助手 8.4";left=0;top=0;right=338;bottom=60;align="left";bgcolor=0xD77800;color=0xFFFFFF;dl=1;dr=1;dt=1;font=LOGFONT(h=-18;weight=600);z=4}
 )
 /*}}*/
@@ -54,6 +58,7 @@ mainForm.chkSysRun.skin(style.checkBox);
 mainForm.chkTopmost.skin(style.checkBox);
 
 mainForm.cardImeTip.directDrawBackgroundOnly();
+mainForm.cardMemReduce.directDrawBackgroundOnly();
 mainForm.cardSystem.directDrawBackgroundOnly();
 mainForm.cardTopmost.directDrawBackgroundOnly();
 
@@ -78,6 +83,9 @@ imeBar.quirksMode = config.setting.updateQuirksMode();
 import win.util.tray;
 mainForm.tray = win.util.tray(mainForm)  
 mainForm.tray.tip = "ImTip：智能桌面助手" //设置鼠标提示 
+
+// 托盘图标显示内存
+import app.trayIcon;
 
 //响应托盘消息
 mainForm.onTrayMessage = {
@@ -220,6 +228,61 @@ mainForm.chkImeBarDisabled.oncommand = function( id,event ){
 	..config.setting.save();
 }
 
+// 内存优化功能
+import app.memReduce;
+
+// 更新内存显示
+updateMemInfo = function(){
+	var info = app.memReduce.getStatus();
+	mainForm.lblMemInfo.text = string.format("内存: %d%% (%s / %s)", 
+		info.memoryLoad, 
+		app.memReduce.formatSize(info.usedPhys),
+		info.totalPhysFormatted);
+	
+	// 更新进度条
+	var progress = info.memoryLoad / 100.0;
+	mainForm.progressMem.setPos(progress);
+	
+	// 更新托盘图标提示
+	mainForm.tray.tip = string.format("ImTip - 内存: %d%%", info.memoryLoad);
+	
+	// 更新托盘图标显示内存数字
+	app.trayIcon.updateTrayIcon(mainForm.tray, info.memoryLoad);
+}
+
+// 初始显示
+updateMemInfo();
+
+// 定时更新内存信息
+mainForm.setInterval(updateMemInfo, 2000);
+
+// 内存清理按钮
+mainForm.btnMemReduce.skin({
+    color =={default= style.button.color};
+    background = {
+        default = 0xFF2196F3;
+        hover = 0xFF1976D2;
+        active = 0xFF0D47A1;
+        disabled = 0xFFCCCCCC;
+    };
+});
+
+mainForm.btnMemReduce.oncommand = function(id,event){
+	// 执行内存清理
+	var result = app.memReduce.doClean("normal");
+	
+	// 更新显示
+	updateMemInfo();
+	
+	// 显示结果
+	if(result.freed > 0){
+		mainForm.msgbox("内存清理完成\n释放: " + result.freedFormatted, "ImTip");
+	}
+	else {
+		mainForm.msgbox("内存清理完成", "ImTip");
+	}
+}
+
 // 开机启动
 mainForm.chkSysRun.checked = config.setting.sysRun;
 mainForm.chkSysRun.oncommand = function(id,event){
@@ -350,10 +413,6 @@ mainForm.btnClose.oncommand = function(id,event){
 
 mainForm.onMouseDown  = function(wParam,lParam){ 
     mainForm.hitCaption();
-}
-
-mainForm.lblImeTipDesc.oncommand = function(id,event){
-	
 }
 
 win.loopMessage();
