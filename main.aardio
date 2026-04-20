@@ -19,22 +19,20 @@ import fonts.fontAwesomeSub;
 /*DSG{{*/
 mainForm = win.form(text="ImTip 8.4 - 智能桌面助手";right=336;bottom=358;bgcolor=0xF5F5F5;border="none";max=false;min=false)
 mainForm.add(
-btnClose={cls="plus";text="×";left=309;top=0;right=337;bottom=28;color=0xFFFFFF;dr=1;dt=1;font=LOGFONT(h=-22);notify=1;z=30};
-btnImTip={cls="plus";text="配置";left=217;top=171;right=287;bottom=199;bgcolor=0x6BA800;border={radius=4};color=0xFFFFFF;dl=1;dt=1;font=LOGFONT(h=-13);notify=1;z=16};
-cardImeTip={cls="plus";left=20;top=80;right=316;bottom=210;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};dl=1;dr=1;dt=1;z=4};
-cardSystem={cls="plus";left=20;top=228;right=316;bottom=308;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};db=1;dl=1;dr=1;z=1};
-cardTopmost={cls="plus";left=20;top=326;right=316;bottom=358;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};db=1;dl=1;dr=1;z=5};
-chkImeBarDisabled={cls="plus";text="启用";left=97;top=171;right=177;bottom=191;align="left";bgcolor=0xFFFFFF;dl=1;dt=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=15};
-chkSysRun={cls="plus";text="开机启动";left=97;top=282;right=197;bottom=307;align="left";bgcolor=0xFFFFFF;db=1;dl=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=27};
-chkTopmost={cls="plus";text="置顶窗口";left=97;top=342;right=197;bottom=362;align="left";bgcolor=0xFFFFFF;db=1;dl=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=32};
-hotkeyTopmost={cls="hotkey";left=217;top=344;right=297;bottom=364;db=1;dl=1;edge=1;z=33};
-iconImeTip={cls="plus";text='\uF0EB';left=37;top=96;right=87;bottom=146;bgcolor=0xFFFFFF;dl=1;dt=1;font=LOGFONT(h=-22;name='imtip');iconColor=0x6BA800;z=12};
-iconSystem={cls="plus";text='\uF013';left=37;top=244;right=87;bottom=294;bgcolor=0xFFFFFF;db=1;dl=1;font=LOGFONT(h=-22;name='FontAwesome');iconColor=0x666666;z=31};
-lblImeTipDesc={cls="static";text="智能显示输入法状态
-支持多种窗口类型";left=97;top=129;right=287;bottom=169;bgcolor=0xFFFFFF;color=0x666666;dl=1;dt=1;z=14};
-lblImeTipTitle={cls="plus";text="输入提示";left=97;top=99;right=287;bottom=124;align="left";bgcolor=0xFFFFFF;color=0x333333;dl=1;dt=1;font=LOGFONT(h=-16;weight=600);z=13};
-lblSystemTitle={cls="plus";text="系统选项";left=97;top=247;right=207;bottom=272;align="left";bgcolor=0xFFFFFF;color=0x333333;db=1;dl=1;font=LOGFONT(h=-16;weight=600);z=26};
-titleBar={cls="bk";text="    IᵐTⁱᵖ 智能桌面助手 8.4";left=0;top=0;right=338;bottom=60;align="left";bgcolor=0xD77800;color=0xFFFFFF;dl=1;dr=1;dt=1;font=LOGFONT(h=-18;weight=600);z=6}
+btnClose={cls="plus";text="×";left=309;top=0;right=337;bottom=28;color=0xFFFFFF;dr=1;dt=1;font=LOGFONT(h=-22);notify=1;z=11};
+btnImTip={cls="plus";text="配置";left=216;top=143;right=286;bottom=171;bgcolor=0x6BA800;border={radius=4};color=0xFFFFFF;dl=1;dt=1;font=LOGFONT(h=-13);notify=1;z=8};
+cardImeTip={cls="plus";left=20;top=80;right=316;bottom=183;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};dl=1;dr=1;dt=1;z=2};
+cardSystem={cls="plus";left=20;top=194;right=316;bottom=269;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};db=1;dl=1;dr=1;z=1};
+cardTopmost={cls="plus";left=23;top=284;right=319;bottom=352;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};db=1;dl=1;dr=1;z=3};
+chkImeBarDisabled={cls="plus";text="启用";left=97;top=149;right=177;bottom=169;align="left";bgcolor=0xFFFFFF;dl=1;dt=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=7};
+chkSysRun={cls="plus";text="开机启动";left=97;top=235;right=197;bottom=260;align="left";bgcolor=0xFFFFFF;db=1;dl=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=10};
+chkTopmost={cls="plus";text="置顶窗口";left=100;top=322;right=200;bottom=342;align="left";bgcolor=0xFFFFFF;db=1;dl=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=12};
+hotkeyTopmost={cls="hotkey";left=220;top=321;right=300;bottom=341;db=1;dl=1;edge=1;z=13};
+lblImeTipDesc={cls="static";text="智能显示输入法状态，支持多种窗口类型";left=53;top=120;right=297;bottom=160;bgcolor=0xFFFFFF;color=0x666666;dl=1;dt=1;notify=1;z=6};
+lblImeTipTitle={cls="plus";text="输入提示";left=40;top=85;right=230;bottom=110;align="left";bgcolor=0xFFFFFF;color=0x333333;dl=1;dt=1;font=LOGFONT(h=-16;weight=600);z=5};
+lblSystemTitle={cls="plus";text="系统选项";left=40;top=201;right=150;bottom=226;align="left";bgcolor=0xFFFFFF;color=0x333333;db=1;dl=1;font=LOGFONT(h=-16;weight=600);z=9};
+plus={cls="plus";text="置顶窗口";left=40;top=290;right=150;bottom=315;align="left";bgcolor=0xFFFFFF;color=0x333333;db=1;dl=1;font=LOGFONT(h=-16;weight=600);z=14};
+titleBar={cls="bk";text="    IᵐTⁱᵖ 智能桌面助手 8.4";left=0;top=0;right=338;bottom=60;align="left";bgcolor=0xD77800;color=0xFFFFFF;dl=1;dr=1;dt=1;font=LOGFONT(h=-18;weight=600);z=4}
 )
 /*}}*/
 
@@ -51,15 +49,6 @@ if(!atom){
 	return;
 }
 
-import fsys.update.simpleMain;
-if( fsys.update.simpleMain(
-	"ImTip 桌面助手",
-	"http://imtip.aardio.com/update/",
-	io.appData("/aardio/std/ImTip/app/update"),
-	function(version,description,status){})){
-	return 0;	
-}
-
 mainForm.chkImeBarDisabled.skin(style.checkBox);
 mainForm.chkSysRun.skin(style.checkBox);
 mainForm.chkTopmost.skin(style.checkBox);
@@ -74,18 +63,7 @@ import win.ui.shadow;
 win.ui.shadow(mainForm);
 
 import config;
-if(!_ARGV.sys){
-	if(!_ARGV.updated){
-		mainForm.show()
-	}
-	else {
-		if(!config.setting.runOnce){
-			mainForm.show();
-			config.setting.runOnce = true;
-			config.setting.save();
-		}
-	}  
-}
+mainForm.show();
  
 //显示输入状态栏
 import key.ime.stateBar;
@@ -372,6 +350,10 @@ mainForm.btnClose.oncommand = function(id,event){
 
 mainForm.onMouseDown  = function(wParam,lParam){ 
     mainForm.hitCaption();
+}
+
+mainForm.lblImeTipDesc.oncommand = function(id,event){
+	
 }
 
 win.loopMessage();
