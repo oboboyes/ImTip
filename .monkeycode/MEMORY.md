@@ -38,3 +38,11 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
 - Instructions:
   - 置顶快捷键入口在 `main.aardio`，通过 `app.topmost.registerHotkey(mainForm)` 注册全局热键。
   - 具体置顶逻辑集中在 `lib/app/topmost.aardio`，包括前台窗口识别、置顶切换和热键注册。
+
+[内存清理功能结构]
+- Date: 2026-04-20
+- Context: Agent 在执行“排查内存清理无明显效果”时发现
+- Category: 代码结构
+- Instructions:
+  - 内存清理入口在 `main.aardio` 的 `btnMemReduce.oncommand`，执行后立即刷新界面并弹窗反馈结果。
+  - 实际清理逻辑集中在 `lib/app/memReduce.aardio`，通过 `process.emptyWorkingSet()` 整理当前进程或遍历其他进程工作集。
