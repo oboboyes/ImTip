@@ -9,8 +9,8 @@ namespace app.topmostOverlay;
 // 已标记的窗口表 { 目标hwnd = {tooltip=tooltip对象, timerId=定时器ID, lastX=上次X, lastY=上次Y, hidden=是否隐藏} }
 var markedWindows = {};
 
-// 标识文本（图钉表情）
-var TOPMOST_TEXT = "📌";
+// 标识文本使用 ASCII，避免部分窗口标题栏字体把图标显示成方框。
+var TOPMOST_TEXT = "T";
 
 // 定时检查间隔（毫秒）
 var TIMER_INTERVAL = 200;
@@ -123,6 +123,7 @@ removeOverlay = function(targetHwnd){
 	if(info.tooltip){
 		// 隐藏tooltip
 		info.tooltip.trackPopup(false);
+		try{ info.tooltip.close(); }
 	}
 	
 	// 清除定时器
