@@ -67,10 +67,10 @@ class appTrayMenu{
 			..config.imgPreview.save();
 			
 			if(..config.imgPreview.enabled){
-				app.imgPreview.registerHotkey(winform);
+				app.imgPreview.installHook();
 			}
 			else {
-				app.imgPreview.unregisterHotkey(winform);
+				app.imgPreview.uninstallHook();
 				app.imgPreview.closePreview();
 			}
 			

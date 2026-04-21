@@ -201,7 +201,7 @@ mainForm.onClose = function(){
 	app.topmost.removeAllTopmost();
 	
 	import app.imgPreview;
-	app.imgPreview.unregisterHotkey(mainForm);
+	app.imgPreview.uninstallHook();
 	app.imgPreview.closePreview();
 	
     mainForm.show(false);
@@ -224,7 +224,7 @@ app.topmost.setupImeBarFix();
 
 // 图片预览功能
 import app.imgPreview;
-app.imgPreview.registerHotkey(mainForm);
+app.imgPreview.installHook();
 
 // 图片预览开关
 mainForm.chkImgPreview.checked = !!config.imgPreview.enabled;
@@ -234,11 +234,11 @@ mainForm.chkImgPreview.oncommand = function(id,event){
 		config.imgPreview.save();
 		
 		import app.imgPreview;
-		app.imgPreview.registerHotkey(mainForm);
+		app.imgPreview.installHook();
 	}
 	else {
 		import app.imgPreview;
-		app.imgPreview.unregisterHotkey(mainForm);
+		app.imgPreview.uninstallHook();
 		app.imgPreview.closePreview();
 		
 		config.imgPreview.enabled = false;

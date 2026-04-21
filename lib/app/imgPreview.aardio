@@ -2,6 +2,7 @@
 import win;
 import winex;
 import win.ui;
+import key.hook;
 import gdip.bitmap;
 import config;
 
@@ -10,8 +11,8 @@ namespace app.imgPreview;
 // 预览窗口
 var previewForm = null;
 
-// 热键ID
-var hotkeyId = null;
+// 键盘钩子
+var kbHook = null;
 
 // 支持的图片扩展名
 var imageExts = {
@@ -175,41 +176,53 @@ showPreview = function(){
 	return true;
 }
 
-// 注册空格键热键
-registerHotkey = function(winform){
-	unregisterHotkey(winform);
+// 安装键盘钩子
+installHook = function(){
+	uninstallHook();
 	
 	if(!..config.imgPreview.enabled) return false;
 	
-	// 注册空格键热键（无修饰键）
-	hotkeyId = winform.reghotkey(
-		function(id,mod,vk){
-			// 检查当前前台窗口是否为资源管理器
-			var hwnd = ..win.getForeground();
-			if(!hwnd) return;
-			
-			var cls = ..win.getClass(hwnd);
-			if(cls != "ExploreWClass" && cls != "CabinetWClass") return;
-			
-			// 如果已有预览窗口，关闭它
-			if(previewForm){
-				closePreview();
-				return;
-			}
-			
-			// 显示预览
+	kbHook = ..key.hook();
+	kbHook.proc = function(msg,vkCode,scanCode,injected,flags,timeStamp,extraInfo){
+		// 忽略模拟按键
+		if(injected) return;
+		
+		// 仅处理按键按下消息
+		if(msg != 0x100/*_WM_KEYDOWN*/ && msg != 0x104/*_WM_SYSKEYDOWN*/) return;
+		
+		// 仅处理空格键
+		if(vkCode != 0x20/*_VK_SPACE*/) return;
+		
+		// 如果已有预览窗口，关闭它并拦截空格
+		if(previewForm){
+			closePreview();
+			return true;
+		}
+		
+		// 检查当前前台窗口是否为资源管理器
+		var hwnd = ..win.getForeground();
+		if(!hwnd) return;
+		
+		var cls = ..win.getClass(hwnd);
+		if(cls != "ExploreWClass" && cls != "CabinetWClass") return;
+		
+		// 尝试显示预览，使用 setTimeout 异步执行避免阻塞钩子
+		..win.setTimeout(function(){
 			showPreview();
-		}, 0, 0x20/*_VK_SPACE*/
-	);
+		}, 50);
+		
+		// 拦截空格键，不让它传递到资源管理器
+		return true;
+	}
 	
-	return !!hotkeyId;
+	return !!kbHook;
 }
 
-// 注销热键
-unregisterHotkey = function(winform){
-	if(hotkeyId && winform){
-		winform.unreghotkey(hotkeyId);
-		hotkeyId = null;
+// 卸载键盘钩子
+uninstallHook = function(){
+	if(kbHook){
+		kbHook.close();
+		kbHook = null;
 	}
 }
 
@@ -219,6 +232,6 @@ getSelectedFiles() = 获取资源管理器中选中的文件路径列表\n返回
 getSelectedImage() = 获取选中文件中的第一个图片路径\n返回路径字符串或 null
 showPreview() = 显示图片预览窗口\n返回是否成功
 closePreview() = 关闭预览窗口
-registerHotkey(winform) = 注册空格键预览热键\n返回是否成功
-unregisterHotkey(winform) = 注销空格键预览热键
+installHook() = 安装键盘钩子监听空格键\n返回是否成功
+uninstallHook() = 卸载键盘钩子
 end intellisense**/
