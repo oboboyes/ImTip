@@ -25,17 +25,6 @@ normalizeDebugText = function(text){
 	return text;
 }
 
-isChatDebugTarget = function(title, cls){
-	title = normalizeDebugText(title);
-	cls = normalizeDebugText(cls);
-	return ..string.find(title, "微信")
-		|| ..string.find(title, "企业微信")
-		|| ..string.find(title, "WeChat")
-		|| ..string.find(title, "WeCom")
-		|| ..string.find(cls, "WeChat")
-		|| ..string.find(cls, "ChatWnd");
-}
-
 describeWindowForDebug = function(hwnd, targetHwnd){
 	if(!hwnd || !..win.isWindow(hwnd)) return null;
 	
@@ -61,7 +50,6 @@ describeWindowForDebug = function(hwnd, targetHwnd){
 
 writeDebugSnapshot = function(targetHwnd, info, activeRelated){
 	if(!targetHwnd || !info) return;
-	if(!isChatDebugTarget(info.title, info.cls)) return;
 	
 	info.debugCounter = (info.debugCounter || 0) + 1;
 	if(info.debugCounter % 2) return;
@@ -343,6 +331,7 @@ toggleForegroundTopmost = function(){
 	applyTopmostState(hwnd, true);
 	
 	topmostWindows[hwnd] = { title = info.title; cls = info.cls; related = {} };
+	writeDebugSnapshot(hwnd, topmostWindows[hwnd], {});
 	ensureMaintainTimer();
 	try{ ..app.topmostOverlay.createOverlay(hwnd); }
 	return true;
