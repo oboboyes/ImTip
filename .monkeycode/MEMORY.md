@@ -46,3 +46,11 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
 - Instructions:
   - 内存清理入口在 `main.aardio` 的 `btnMemReduce.oncommand`，执行后立即刷新界面并弹窗反馈结果。
   - 实际清理逻辑集中在 `lib/app/memReduce.aardio`，通过 `process.emptyWorkingSet()` 整理当前进程或遍历其他进程工作集。
+
+[微信置顶弹层维护方式]
+- Date: 2026-04-21
+- Context: Agent 在执行“修复微信表情面板在置顶聊天窗下无法弹出”时发现
+- Category: 代码模式
+- Instructions:
+  - 微信相关的置顶兼容逻辑集中在 `lib/app/topmost.aardio` 的维护定时器，而不是单次切换置顶时一次性处理。
+  - 仅跟踪前台窗口不足以覆盖微信表情面板，这类弹层需要按 `owner` 或 `GA_ROOTOWNER` 与聊天窗的关系做周期性扫描和同步置顶。

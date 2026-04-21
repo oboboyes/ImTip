@@ -16,24 +16,52 @@ var hotkeyId = null;
 // 持续维护置顶状态的定时器
 var maintainTimerId = null;
 
-syncForegroundPopup = function(targetHwnd, info){
+isRelatedPopupWindow = function(hwnd, targetHwnd){
+	if(!hwnd || hwnd == targetHwnd) return false;
+	if(!..win.isWindow(hwnd) || !..win.isVisible(hwnd)) return false;
+	if(..mainForm && hwnd == ..mainForm.hwnd) return false;
+	
+	var ownerHwnd = ::User32.GetWindow(hwnd, 4/*_GW_OWNER*/);
+	if(ownerHwnd == targetHwnd) return true;
+	
+	var rootOwner = ::User32.GetAncestor(hwnd, 3/*_GA_ROOTOWNER*/);
+	return rootOwner && rootOwner == targetHwnd;
+}
+
+syncRelatedPopups = function(targetHwnd, info){
 	if(!targetHwnd || !info) return;
 	
-	var foregroundHwnd = ..win.getForeground();
-	if(!foregroundHwnd || foregroundHwnd == targetHwnd) return;
-	if(!..win.isWindow(foregroundHwnd) || !..win.isVisible(foregroundHwnd)) return;
+	var activeRelated = {};
+	var trackPopup = function(hwnd){
+		if(!isRelatedPopupWindow(hwnd, targetHwnd)) return;
+		applyTopmostState(hwnd, true);
+		activeRelated[hwnd] = true;
+	}
 	
-	var rootOwner = ::User32.GetAncestor(foregroundHwnd, 3/*_GA_ROOTOWNER*/);
-	if(rootOwner && rootOwner != targetHwnd) return;
+	trackPopup(..win.getForeground());
 	
-	applyTopmostState(foregroundHwnd, true);
+	var desktop = ::User32.GetDesktopWindow();
+	var hwnd = ::User32.GetTopWindow(desktop);
+	while(hwnd){
+		trackPopup(hwnd);
+		hwnd = ::User32.GetWindow(hwnd, 2/*_GW_HWNDNEXT*/);
+	}
+	
 	info.related = info.related || {};
-	info.related[foregroundHwnd] = true;
+	for(hwnd in info.related){
+		if(activeRelated[hwnd]) continue;
+		if(topmostWindows[hwnd]) continue;
+		if(hwnd && ..win.isWindow(hwnd)){
+			applyTopmostState(hwnd, false);
+		}
+	}
+	info.related = activeRelated;
 }
 
 clearRelatedTopmost = function(info){
 	if(!info || !info.related) return;
 	for(hwnd in info.related){
+		if(topmostWindows[hwnd]) continue;
 		if(hwnd && ..win.isWindow(hwnd)){
 			applyTopmostState(hwnd, false);
 		}
@@ -67,6 +95,7 @@ ensureMaintainTimer = function(){
 		for(hwnd, info in topmostWindows){
 			if(!hwnd || !info) continue;
 			if(!..win.isWindow(hwnd)){
+				clearRelatedTopmost(info);
 				topmostWindows[hwnd] = null;
 				continue;
 			}
@@ -75,7 +104,7 @@ ensureMaintainTimer = function(){
 			if(!(styleEx & 0x8/*_WS_EX_TOPMOST*/)){
 				applyTopmostState(hwnd, true);
 			}
-			syncForegroundPopup(hwnd, info);
+			syncRelatedPopups(hwnd, info);
 			
 			if(!..app.topmostOverlay.hasOverlay(hwnd)){
 				try{ ..app.topmostOverlay.createOverlay(hwnd); }
@@ -187,6 +216,7 @@ toggleForegroundTopmost = function(){
 	
 	// 如果已经置顶，则取消置顶
 	if(topmostWindows[hwnd]){
+		clearRelatedTopmost(topmostWindows[hwnd]);
 		applyTopmostState(hwnd, false);
 		topmostWindows[hwnd] = null;
 		try{ ..app.topmostOverlay.removeOverlay(hwnd); }
