@@ -107,6 +107,11 @@ if(config.memReduce.enabled === null) {
 	config.memReduce.threshold = 80;         // 内存阈值，超过此值触发清理
 }
 
+// 图片预览默认配置
+if(config.imgPreview.enabled === null) {
+	config.imgPreview.enabled = true;        // 是否启用空格键预览图片
+}
+
 /**intellisense(config)
 setting = 通用设置
 saveAll() = 保存当前对象（fsys.config ）管理的所有文件同步表（fsys.table 对象）到文件。\n如果 fsys.table 对象调用 enableAutoSave(false) 禁用了自动保存，则 saveAll 调用对其无效。\n禁用自动保存的 fsys.table 对象必须显式调用其 save 方法保存表数据到文件。

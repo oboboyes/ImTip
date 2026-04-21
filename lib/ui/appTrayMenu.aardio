@@ -60,6 +60,26 @@ class appTrayMenu{
 		
 		popmenu.add();//分隔线 
 		
+		// 图片预览菜单
+		import app.imgPreview;
+		var idImgPreview = popmenu.add('空格预览图片',function(id){
+			..config.imgPreview.enabled = !..config.imgPreview.enabled;
+			..config.imgPreview.save();
+			
+			if(..config.imgPreview.enabled){
+				app.imgPreview.registerHotkey(winform);
+			}
+			else {
+				app.imgPreview.unregisterHotkey(winform);
+				app.imgPreview.closePreview();
+			}
+			
+			if(..mainForm) ..mainForm.chkImgPreview.checked = !!..config.imgPreview.enabled;
+		});
+		popmenu.check(idImgPreview,!!..config.imgPreview.enabled,0/*_MF_BYCOMMAND*/);
+		
+		popmenu.add();//分隔线 
+		
 		// 置顶窗口菜单
 		import app.topmost;
 		var topmostCount = app.topmost.getTopmostCount();

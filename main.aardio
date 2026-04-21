@@ -17,7 +17,7 @@ import win.ui.atom;
 import win.dlg.message;
 import fonts.fontAwesomeSub;
 /*DSG{{*/
-mainForm = win.form(text="ImTip 8.4 - 智能桌面助手";right=336;bottom=440;bgcolor=0xF5F5F5;border="none";max=false;min=false)
+mainForm = win.form(text="ImTip 8.4 - 智能桌面助手";right=336;bottom=490;bgcolor=0xF5F5F5;border="none";max=false;min=false)
 mainForm.add(
 btnClose={cls="plus";text="×";left=309;top=0;right=337;bottom=28;color=0xFFFFFF;dr=1;dt=1;font=LOGFONT(h=-22);notify=1;z=10};
 btnImTip={cls="plus";text="配置";left=216;top=112;right=286;bottom=140;bgcolor=0x6BA800;border={radius=4};color=0xFFFFFF;dl=1;dt=1;font=LOGFONT(h=-13);notify=1;z=7};
@@ -25,18 +25,22 @@ btnMemReduce={cls="plus";text="清理";left=216;top=214;right=286;bottom=242;bgc
 cardImeTip={cls="plus";left=20;top=80;right=316;bottom=154;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};dl=1;dr=1;dt=1;z=2};
 cardMemReduce={cls="plus";left=20;top=175;right=316;bottom=280;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};dl=1;dr=1;z=14};
 cardSystem={cls="plus";left=20;top=310;right=316;bottom=354;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};db=1;dl=1;dr=1;z=1};
-cardTopmost={cls="plus";left=20;top=363;right=316;bottom=430;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};db=1;dl=1;dr=1;z=3};
+cardImgPreview={cls="plus";left=20;top=363;right=316;bottom=410;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};dl=1;dr=1;z=21};
+cardTopmost={cls="plus";left=20;top=418;right=316;bottom=480;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};db=1;dl=1;dr=1;z=3};
 cboCleanMode={cls="combobox";left=103;top=236;right=209;bottom=256;dl=1;dt=1;edge=1;items={};mode="dropdownlist";z=20};
 chkAutoClean={cls="plus";text="自动清理";left=101;top=215;right=181;bottom=235;align="left";bgcolor=0xFFFFFF;dl=1;dt=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=19};
 chkImeBarDisabled={cls="plus";text="启用";left=97;top=118;right=177;bottom=138;align="left";bgcolor=0xFFFFFF;dl=1;dt=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=6};
 chkSysRun={cls="plus";text="开机启动";left=125;top=318;right=308;bottom=343;align="left";bgcolor=0xFFFFFF;db=1;dl=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=9};
-chkTopmost={cls="plus";text="置顶窗口";left=100;top=398;right=200;bottom=418;align="left";bgcolor=0xFFFFFF;db=1;dl=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=11};
-hotkeyTopmost={cls="hotkey";left=220;top=397;right=300;bottom=417;db=1;dl=1;edge=1;z=12};
+chkImgPreview={cls="plus";text="空格预览图片";left=100;top=378;right=220;bottom=398;align="left";bgcolor=0xFFFFFF;dl=1;dr=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=22};
+chkTopmost={cls="plus";text="置顶窗口";left=100;top=448;right=200;bottom=468;align="left";bgcolor=0xFFFFFF;db=1;dl=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=11};
+hotkeyTopmost={cls="hotkey";left=220;top=447;right=300;bottom=467;db=1;dl=1;edge=1;z=12};
 lblImeTipTitle={cls="plus";text="输入提示";left=40;top=85;right=230;bottom=110;align="left";bgcolor=0xFFFFFF;color=0x333333;dl=1;dt=1;font=LOGFONT(h=-16;weight=600);z=5};
 lblMemInfo={cls="static";text="内存: ";left=128;top=187;right=299;bottom=208;bgcolor=0xFFFFFF;color=0x666666;dl=1;dt=1;z=16};
 lblMemReduceTitle={cls="plus";text="内存优化";left=40;top=182;right=115;bottom=207;align="left";bgcolor=0xFFFFFF;color=0x333333;dl=1;dt=1;font=LOGFONT(h=-16;weight=600);z=17};
 lblSystemTitle={cls="plus";text="系统选项";left=40;top=317;right=150;bottom=342;align="left";bgcolor=0xFFFFFF;color=0x333333;db=1;dl=1;font=LOGFONT(h=-16;weight=600);z=8};
-plus={cls="plus";text="置顶窗口";left=40;top=369;right=150;bottom=394;align="left";bgcolor=0xFFFFFF;color=0x333333;db=1;dl=1;font=LOGFONT(h=-16;weight=600);z=13};
+lblImgPreviewTitle={cls="plus";text="图片预览";left=40;top=369;right=150;bottom=394;align="left";bgcolor=0xFFFFFF;color=0x333333;dl=1;dr=1;font=LOGFONT(h=-16;weight=600);z=23};
+lblImgPreviewHint={cls="static";text="在资源管理器中按空格键快速预览图片";left=100;top=395;right=308;bottom=410;bgcolor=0xFFFFFF;color=0x999999;dl=1;dr=1;font=LOGFONT(h=-11);z=24};
+plus={cls="plus";text="置顶窗口";left=40;top=424;right=150;bottom=449;align="left";bgcolor=0xFFFFFF;color=0x333333;db=1;dl=1;font=LOGFONT(h=-16;weight=600);z=13};
 progressMem={cls="progress";left=99;top=263;right=308;bottom=273;dl=1;dt=1;max=0;min=0;z=18};
 titleBar={cls="bk";text="    IᵐTⁱᵖ 智能桌面助手 8.4";left=0;top=0;right=338;bottom=60;align="left";bgcolor=0xD77800;color=0xFFFFFF;dl=1;dr=1;dt=1;font=LOGFONT(h=-18;weight=600);z=4}
 )
@@ -59,10 +63,12 @@ mainForm.chkImeBarDisabled.skin(style.checkBox);
 mainForm.chkSysRun.skin(style.checkBox);
 mainForm.chkTopmost.skin(style.checkBox);
 mainForm.chkAutoClean.skin(style.checkBox);
+mainForm.chkImgPreview.skin(style.checkBox);
 
 mainForm.cardImeTip.directDrawBackgroundOnly();
 mainForm.cardMemReduce.directDrawBackgroundOnly();
 mainForm.cardSystem.directDrawBackgroundOnly();
+mainForm.cardImgPreview.directDrawBackgroundOnly();
 mainForm.cardTopmost.directDrawBackgroundOnly();
 
 mainForm.enableDpiScaling("init");
@@ -194,6 +200,10 @@ mainForm.onClose = function(){
 	app.topmost.unregisterHotkey(mainForm);
 	app.topmost.removeAllTopmost();
 	
+	import app.imgPreview;
+	app.imgPreview.unregisterHotkey(mainForm);
+	app.imgPreview.closePreview();
+	
     mainForm.show(false);
     return false; 
 } 
@@ -211,6 +221,30 @@ if(__argvImTipConfig){
 import app.topmost;
 app.topmost.registerHotkey(mainForm);
 app.topmost.setupImeBarFix();
+
+// 图片预览功能
+import app.imgPreview;
+app.imgPreview.registerHotkey(mainForm);
+
+// 图片预览开关
+mainForm.chkImgPreview.checked = !!config.imgPreview.enabled;
+mainForm.chkImgPreview.oncommand = function(id,event){
+	if(owner.checked){
+		config.imgPreview.enabled = true;
+		config.imgPreview.save();
+		
+		import app.imgPreview;
+		app.imgPreview.registerHotkey(mainForm);
+	}
+	else {
+		import app.imgPreview;
+		app.imgPreview.unregisterHotkey(mainForm);
+		app.imgPreview.closePreview();
+		
+		config.imgPreview.enabled = false;
+		config.imgPreview.save();
+	}
+}
 
 // 配置按钮
 mainForm.btnImTip.skin({
@@ -298,7 +332,7 @@ mainForm.btnMemReduce.oncommand = function(id,event){
 			table.push(lines, string.format("处理失败: %d", result.failed));
 		}
 	}
-	mainForm.msgbox(string.join(lines, "\n"), "ImTip");
+	mainForm.msgbox(string.join(lines, "，"), "ImTip");
 }
 
 // 自动清理配置

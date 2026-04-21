@@ -19,10 +19,10 @@ generateIcon = function(number, width = 16, height = 16){
 	
 	// 设置背景色（根据数值变化）
 	var bgColor;
-	if(number < 50){
+	if(number < 70){
 		bgColor = 0xFF4CAF50;  // 绿色 - 低内存使用
 	}
-	elseif(number < 75){
+	elseif(number < 80){
 		bgColor = 0xFFFF9800;  // 橙色 - 中等内存使用
 	}
 	else {
