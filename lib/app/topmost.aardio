@@ -10,11 +10,116 @@ namespace app.topmost;
 // 注意：hwnd为指针类型，仅在当前会话有效，不跨重启持久化
 var topmostWindows = {};
 
+var DEBUG_SNAPSHOT_PATH = ..io.appData("/aardio/std/ImTip/topmost-debug.txt");
+
 // 热键ID
 var hotkeyId = null;
 
 // 持续维护置顶状态的定时器
 var maintainTimerId = null;
+
+normalizeDebugText = function(text){
+	if(text === null) return "";
+	text = tostring(text);
+	text = ..string.replace(text, "[\r\n\t]+", " ");
+	return text;
+}
+
+isChatDebugTarget = function(title, cls){
+	title = normalizeDebugText(title);
+	cls = normalizeDebugText(cls);
+	return ..string.find(title, "微信")
+		|| ..string.find(title, "企业微信")
+		|| ..string.find(title, "WeChat")
+		|| ..string.find(title, "WeCom")
+		|| ..string.find(cls, "WeChat")
+		|| ..string.find(cls, "ChatWnd");
+}
+
+describeWindowForDebug = function(hwnd, targetHwnd){
+	if(!hwnd || !..win.isWindow(hwnd)) return null;
+	
+	var ownerHwnd = ::User32.GetWindow(hwnd, 4/*_GW_OWNER*/);
+	var rootOwner = ::User32.GetAncestor(hwnd, 3/*_GA_ROOTOWNER*/);
+	var style = ::User32.GetWindowLong(hwnd, -16/*_GWL_STYLE*/);
+	var exStyle = ::User32.GetWindowLong(hwnd, -20/*_GWL_EXSTYLE*/);
+	var title = ..winex.getText(hwnd);
+	if(!#title) title = ..win.getText(hwnd);
+	
+	return {
+		hwnd = tostring(hwnd);
+		title = normalizeDebugText(title);
+		cls = normalizeDebugText(..win.getClass(hwnd));
+		owner = ownerHwnd ? tostring(ownerHwnd) : "";
+		rootOwner = rootOwner ? tostring(rootOwner) : "";
+		style = ..string.format("0x%X", style);
+		exStyle = ..string.format("0x%X", exStyle);
+		visible = ..win.isVisible(hwnd) ? 1 : 0;
+		related = isRelatedPopupWindow(hwnd, targetHwnd) ? 1 : 0;
+	};
+}
+
+writeDebugSnapshot = function(targetHwnd, info, activeRelated){
+	if(!targetHwnd || !info) return;
+	if(!isChatDebugTarget(info.title, info.cls)) return;
+	
+	info.debugCounter = (info.debugCounter || 0) + 1;
+	if(info.debugCounter % 2) return;
+	
+	var lines = {};
+	var foregroundHwnd = ..win.getForeground();
+	var targetInfo = describeWindowForDebug(targetHwnd, targetHwnd);
+	var foregroundInfo = describeWindowForDebug(foregroundHwnd, targetHwnd);
+	
+	..table.push(lines, "target=" + (targetInfo ? targetInfo.hwnd : ""));
+	..table.push(lines, "targetTitle=" + normalizeDebugText(info.title));
+	..table.push(lines, "targetClass=" + normalizeDebugText(info.cls));
+	..table.push(lines, "foreground=" + (foregroundInfo ? foregroundInfo.hwnd : ""));
+	..table.push(lines, "activeRelatedCount=" + tostring(#activeRelated));
+	..table.push(lines, "");
+	
+	var appendWindow = function(prefix, item){
+		if(!item) return;
+		..table.push(lines, prefix + " hwnd=" + item.hwnd);
+		..table.push(lines, prefix + " cls=" + item.cls);
+		..table.push(lines, prefix + " title=" + item.title);
+		..table.push(lines, prefix + " owner=" + item.owner);
+		..table.push(lines, prefix + " rootOwner=" + item.rootOwner);
+		..table.push(lines, prefix + " style=" + item.style + " exStyle=" + item.exStyle + " visible=" + tostring(item.visible) + " related=" + tostring(item.related));
+		..table.push(lines, "");
+	}
+	appendWindow("target", targetInfo);
+	appendWindow("foreground", foregroundInfo);
+	
+	var seen = {};
+	if(targetInfo) seen[targetInfo.hwnd] = true;
+	if(foregroundInfo) seen[foregroundInfo.hwnd] = true;
+	
+	var candidateCount = 0;
+	var desktop = ::User32.GetDesktopWindow();
+	var hwnd = ::User32.GetTopWindow(desktop);
+	while(hwnd && candidateCount < 12){
+		if(..win.isWindow(hwnd) && ..win.isVisible(hwnd)){
+			var ownerHwnd = ::User32.GetWindow(hwnd, 4/*_GW_OWNER*/);
+			var rootOwner = ::User32.GetAncestor(hwnd, 3/*_GA_ROOTOWNER*/);
+			var style = ::User32.GetWindowLong(hwnd, -16/*_GWL_STYLE*/);
+			if(hwnd != targetHwnd && (!seen[tostring(hwnd)]) && (
+				ownerHwnd == targetHwnd
+				|| rootOwner == targetHwnd
+				|| (style & 0x80000000/*_WS_POPUP*/)
+				|| ownerHwnd
+			)){
+				var item = describeWindowForDebug(hwnd, targetHwnd);
+				appendWindow("candidate[" + tostring(candidateCount + 1) + "]", item);
+				seen[tostring(hwnd)] = true;
+				candidateCount++;
+			}
+		}
+		hwnd = ::User32.GetWindow(hwnd, 2/*_GW_HWNDNEXT*/);
+	}
+	
+	try{ ..string.save(DEBUG_SNAPSHOT_PATH, ..string.join(lines, "\r\n")); }
+}
 
 isRelatedPopupWindow = function(hwnd, targetHwnd){
 	if(!hwnd || hwnd == targetHwnd) return false;
@@ -26,6 +131,10 @@ isRelatedPopupWindow = function(hwnd, targetHwnd){
 	
 	var ownerHwnd = ::User32.GetWindow(hwnd, 4/*_GW_OWNER*/);
 	if(ownerHwnd == targetHwnd) return true;
+	if(ownerHwnd){
+		var ownerRootOwner = ::User32.GetAncestor(ownerHwnd, 3/*_GA_ROOTOWNER*/);
+		if(ownerRootOwner && ownerRootOwner == targetHwnd) return true;
+	}
 	
 	if(!(style & 0x80000000/*_WS_POPUP*/)) return false;
 	
@@ -61,6 +170,7 @@ syncRelatedPopups = function(targetHwnd, info){
 		}
 	}
 	info.related = activeRelated;
+	writeDebugSnapshot(targetHwnd, info, activeRelated);
 }
 
 clearRelatedTopmost = function(info){
@@ -269,6 +379,10 @@ removeAllTopmost = function(){
 	return count;
 }
 
+getDebugSnapshotPath = function(){
+	return DEBUG_SNAPSHOT_PATH;
+}
+
 // 获取置顶窗口数量
 getTopmostCount = function(){
 	cleanInvalidWindows();
@@ -369,6 +483,7 @@ getTopmostCount() = 获取置顶窗口数量
 getTopmostList() = 获取所有置顶窗口信息列表
 isTopmost(hwnd) = 检查窗口是否已置顶
 cleanInvalidWindows() = 清理已不存在的窗口
+getDebugSnapshotPath() = 返回置顶窗口诊断快照文件路径
 registerHotkey(winform) = 注册置顶热键\n返回是否成功
 unregisterHotkey(winform) = 注销置顶热键
 hotkeyToString(mod,vk) = 热键值转可读字符串
