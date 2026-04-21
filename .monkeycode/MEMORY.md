@@ -70,3 +70,4 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
 - Instructions:
   - `lib/app/topmost.aardio` 可以输出置顶窗口诊断快照，用于记录 target、foreground、candidate 窗口的 `owner`、`rootOwner`、`style` 和 `exStyle`。
   - 诊断快照文件路径由 `app.topmost.getDebugSnapshotPath()` 返回，默认写到 ImTip 的 appData 目录下 `topmost-debug.txt`。
+  - 诊断快照不应依赖特定标题命中；只要成功置顶窗口，就应立即先写出一份初始快照，避免宿主窗口标题不含“微信”时完全不落盘。
