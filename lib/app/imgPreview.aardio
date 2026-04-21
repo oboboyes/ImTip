@@ -4,6 +4,7 @@ import winex;
 import win.ui;
 import key.hook;
 import gdip.bitmap;
+import com;
 import config;
 
 namespace app.imgPreview;
@@ -33,10 +34,37 @@ isExplorerForeground = function(){
 	var hwnd = ..win.getForeground();
 	if(!hwnd) return false, null;
 	
+	var rootHwnd = ::User32.GetAncestor(hwnd, 3/*_GA_ROOTOWNER*/);
+	if(rootHwnd && ..win.isWindow(rootHwnd)) hwnd = rootHwnd;
+	
 	var cls = ..win.getClass(hwnd);
 	if(cls == "ExploreWClass" || cls == "CabinetWClass"){
 		return true, hwnd;
 	}
+	
+	try{
+		var shell = ..com.CreateObject("Shell.Application");
+		if(!shell) return false, null;
+		
+		var windows = shell.Windows();
+		for(i=0; windows.Count-1){
+			var w = windows.Item(i);
+			if(!w) continue;
+			
+			var wHwnd = 0;
+			try{ wHwnd = w.HWND; } catch(e){ wHwnd = 0; }
+			if(!wHwnd) continue;
+			
+			var wRootHwnd = ::User32.GetAncestor(wHwnd, 3/*_GA_ROOTOWNER*/);
+			if(!wRootHwnd) wRootHwnd = wHwnd;
+			if(wHwnd == hwnd || wRootHwnd == hwnd){
+				return true, wHwnd;
+			}
+		}
+	}
+	catch(e){
+	}
+	
 	return false, null;
 }
 
