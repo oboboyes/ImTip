@@ -236,21 +236,16 @@ installHook = function(){
 		var isExplorer, hwnd = isExplorerForeground();
 		if(!isExplorer) return;
 		
-		// 在钩子回调中直接获取选中图片路径（COM调用需快速完成）
-		var imagePath = null;
-		try{
-			imagePath = getSelectedImage(hwnd);
-		}
-		catch(e){
-			// 获取失败，不拦截空格
-			return;
-		}
-		
-		// 如果选中的不是图片，不拦截空格，让资源管理器自己处理
-		if(!imagePath) return;
-		
-		// 异步显示预览窗口，避免阻塞钩子
+		// 异步获取选中图片并显示预览，避免在键盘钩子线程里做 COM 调用。
 		..win.setTimeout(function(){
+			var imagePath = null;
+			try{
+				imagePath = getSelectedImage(hwnd);
+			}
+			catch(e){
+				return;
+			}
+			if(!imagePath) return;
 			showPreview(imagePath);
 		}, 10);
 		
