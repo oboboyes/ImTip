@@ -21,8 +21,13 @@ isRelatedPopupWindow = function(hwnd, targetHwnd){
 	if(!..win.isWindow(hwnd) || !..win.isVisible(hwnd)) return false;
 	if(..mainForm && hwnd == ..mainForm.hwnd) return false;
 	
+	var style = ::User32.GetWindowLong(hwnd, -16/*_GWL_STYLE*/);
+	if(style & 0x40000000/*_WS_CHILD*/) return false;
+	
 	var ownerHwnd = ::User32.GetWindow(hwnd, 4/*_GW_OWNER*/);
 	if(ownerHwnd == targetHwnd) return true;
+	
+	if(!(style & 0x80000000/*_WS_POPUP*/)) return false;
 	
 	var rootOwner = ::User32.GetAncestor(hwnd, 3/*_GA_ROOTOWNER*/);
 	return rootOwner && rootOwner == targetHwnd;
@@ -96,6 +101,7 @@ ensureMaintainTimer = function(){
 			if(!hwnd || !info) continue;
 			if(!..win.isWindow(hwnd)){
 				clearRelatedTopmost(info);
+				try{ ..app.topmostOverlay.removeOverlay(hwnd); }
 				topmostWindows[hwnd] = null;
 				continue;
 			}
@@ -259,6 +265,7 @@ removeAllTopmost = function(){
 		}
 	}
 	topmostWindows = {};
+	try{ ..app.topmostOverlay.removeAllOverlays(); }
 	return count;
 }
 
