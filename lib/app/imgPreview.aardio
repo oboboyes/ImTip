@@ -201,6 +201,13 @@ installHook = function(){
 	if(!..config.imgPreview.enabled) return false;
 	
 	kbHook = ..key.hook();
+	
+	// 检查钩子是否安装成功
+	if(!kbHook || !kbHook.hhk){
+		kbHook = null;
+		return false;
+	}
+	
 	kbHook.proc = function(msg,vkCode,scanCode,injected,flags,timeStamp,extraInfo){
 		// 忽略模拟按键
 		if(injected) return;
@@ -231,7 +238,7 @@ installHook = function(){
 		return true;
 	}
 	
-	return !!kbHook;
+	return true;
 }
 
 // 卸载键盘钩子
