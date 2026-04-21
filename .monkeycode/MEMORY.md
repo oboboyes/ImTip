@@ -62,3 +62,11 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
 - Instructions:
   - 仅按 `GA_ROOTOWNER` 扩大扫描范围过于宽泛，容易误伤企业微信中的普通同链路窗口；需要结合 `WS_POPUP`、`WS_CHILD` 和 `owner` 一起过滤。
   - `lib/app/topmostOverlay.aardio` 的置顶标记应使用保守文本，避免 emoji 在部分窗口标题栏字体里退化成方框。
+
+[微信置顶问题诊断快照]
+- Date: 2026-04-21
+- Context: Agent 在执行“继续排查微信表情弹窗无法显示”时发现
+- Category: 代码模式
+- Instructions:
+  - `lib/app/topmost.aardio` 可以输出置顶窗口诊断快照，用于记录 target、foreground、candidate 窗口的 `owner`、`rootOwner`、`style` 和 `exStyle`。
+  - 诊断快照文件路径由 `app.topmost.getDebugSnapshotPath()` 返回，默认写到 ImTip 的 appData 目录下 `topmost-debug.txt`。
