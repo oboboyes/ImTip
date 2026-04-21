@@ -4,7 +4,6 @@ import winex;
 import win.ui;
 import key.hook;
 import gdip.bitmap;
-import com;
 import config;
 
 namespace app.imgPreview;
@@ -29,50 +28,18 @@ isImageFile = function(path){
 	return !!imageExts[ext];
 }
 
-// 判断前台窗口是否为资源管理器
-isExplorerForeground = function(){
-	var hwnd = ..win.getForeground();
-	if(!hwnd) return false, null;
-	
-	var rootHwnd = ::User32.GetAncestor(hwnd, 3/*_GA_ROOTOWNER*/);
-	if(rootHwnd && ..win.isWindow(rootHwnd)) hwnd = rootHwnd;
-	
-	var cls = ..win.getClass(hwnd);
-	if(cls == "ExploreWClass" || cls == "CabinetWClass"){
-		return true, hwnd;
-	}
-	
-	try{
-		var shell = ..com.CreateObject("Shell.Application");
-		if(!shell) return false, null;
-		
-		var windows = shell.Windows();
-		for(i=0; windows.Count-1){
-			var w = windows.Item(i);
-			if(!w) continue;
-			
-			var wHwnd = 0;
-			try{ wHwnd = w.HWND; } catch(e){ wHwnd = 0; }
-			if(!wHwnd) continue;
-			
-			var wRootHwnd = ::User32.GetAncestor(wHwnd, 3/*_GA_ROOTOWNER*/);
-			if(!wRootHwnd) wRootHwnd = wHwnd;
-			if(wHwnd == hwnd || wRootHwnd == hwnd){
-				return true, wHwnd;
-			}
-		}
-	}
-	catch(e){
-	}
-	
-	return false, null;
-}
-
 // 获取资源管理器中选中的文件路径
-getSelectedFiles = function(hwnd){
+getSelectedFiles = function(){
 	var files = {};
 	
+	// 获取当前前台窗口
+	var hwnd = ..win.getForeground();
 	if(!hwnd) return files;
+	
+	var cls = ..win.getClass(hwnd);
+	
+	// Explorer 主窗口或目录窗口
+	if(cls != "ExploreWClass" && cls != "CabinetWClass") return files;
 	
 	// 通过 Shell COM 接口获取选中文件
 	try{
@@ -111,8 +78,8 @@ getSelectedFiles = function(hwnd){
 }
 
 // 获取选中文件中的第一个图片
-getSelectedImage = function(hwnd){
-	var files = getSelectedFiles(hwnd);
+getSelectedImage = function(){
+	var files = getSelectedFiles();
 	for(i=1; #files){
 		if(isImageFile(files[i])){
 			return files[i];
@@ -209,6 +176,24 @@ showPreview = function(imagePath){
 	return true;
 }
 
+// 异步执行预览逻辑（从钩子回调中调用，避免阻塞）
+var doPreviewAsync = function(){
+	// 获取选中图片
+	var imagePath = null;
+	try{
+		imagePath = getSelectedImage();
+	}
+	catch(e){
+		return;
+	}
+	
+	// 如果选中的不是图片，不做任何处理
+	if(!imagePath) return;
+	
+	// 显示预览
+	showPreview(imagePath);
+}
+
 // 安装键盘钩子
 installHook = function(){
 	uninstallHook();
@@ -216,6 +201,13 @@ installHook = function(){
 	if(!..config.imgPreview.enabled) return false;
 	
 	kbHook = ..key.hook();
+	
+	// 检查钩子是否安装成功
+	if(!kbHook || !kbHook.hhk){
+		kbHook = null;
+		return false;
+	}
+	
 	kbHook.proc = function(msg,vkCode,scanCode,injected,flags,timeStamp,extraInfo){
 		// 忽略模拟按键
 		if(injected) return;
@@ -232,28 +224,21 @@ installHook = function(){
 			return true;
 		}
 		
-		// 检查当前前台窗口是否为资源管理器
-		var isExplorer, hwnd = isExplorerForeground();
-		if(!isExplorer) return;
+		// 检查当前前台窗口是否为资源管理器（轻量操作，不涉及COM）
+		var hwnd = ..win.getForeground();
+		if(!hwnd) return;
 		
-		// 异步获取选中图片并显示预览，避免在键盘钩子线程里做 COM 调用。
-		..win.setTimeout(function(){
-			var imagePath = null;
-			try{
-				imagePath = getSelectedImage(hwnd);
-			}
-			catch(e){
-				return;
-			}
-			if(!imagePath) return;
-			showPreview(imagePath);
-		}, 10);
+		var cls = ..win.getClass(hwnd);
+		if(cls != "ExploreWClass" && cls != "CabinetWClass") return;
+		
+		// 异步执行预览逻辑，避免COM调用阻塞钩子
+		..win.setTimeout(doPreviewAsync, 10);
 		
 		// 拦截空格键
 		return true;
 	}
 	
-	return !!kbHook;
+	return true;
 }
 
 // 卸载键盘钩子
@@ -266,9 +251,8 @@ uninstallHook = function(){
 
 /**intellisense(app.imgPreview)
 isImageFile(path) = 判断文件是否为图片\n返回 true 或 false
-isExplorerForeground() = 判断前台窗口是否为资源管理器\n返回 isExplorer, hwnd
-getSelectedFiles(hwnd) = 获取资源管理器中选中的文件路径列表\n返回字符串数组
-getSelectedImage(hwnd) = 获取选中文件中的第一个图片路径\n返回路径字符串或 null
+getSelectedFiles() = 获取资源管理器中选中的文件路径列表\n返回字符串数组
+getSelectedImage() = 获取选中文件中的第一个图片路径\n返回路径字符串或 null
 showPreview(imagePath) = 显示图片预览窗口\n返回是否成功
 closePreview() = 关闭预览窗口
 installHook() = 安装键盘钩子监听空格键\n返回是否成功
