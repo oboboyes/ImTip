@@ -16,6 +16,31 @@ var hotkeyId = null;
 // 持续维护置顶状态的定时器
 var maintainTimerId = null;
 
+syncForegroundPopup = function(targetHwnd, info){
+	if(!targetHwnd || !info) return;
+	
+	var foregroundHwnd = ..win.getForeground();
+	if(!foregroundHwnd || foregroundHwnd == targetHwnd) return;
+	if(!..win.isWindow(foregroundHwnd) || !..win.isVisible(foregroundHwnd)) return;
+	
+	var rootOwner = ::User32.GetAncestor(foregroundHwnd, 3/*_GA_ROOTOWNER*/);
+	if(rootOwner && rootOwner != targetHwnd) return;
+	
+	applyTopmostState(foregroundHwnd, true);
+	info.related = info.related || {};
+	info.related[foregroundHwnd] = true;
+}
+
+clearRelatedTopmost = function(info){
+	if(!info || !info.related) return;
+	for(hwnd in info.related){
+		if(hwnd && ..win.isWindow(hwnd)){
+			applyTopmostState(hwnd, false);
+		}
+	}
+	info.related = {};
+}
+
 applyTopmostState = function(hwnd, enabled){
 	if(!hwnd || !..win.isWindow(hwnd)) return false;
 	
@@ -50,6 +75,7 @@ ensureMaintainTimer = function(){
 			if(!(styleEx & 0x8/*_WS_EX_TOPMOST*/)){
 				applyTopmostState(hwnd, true);
 			}
+			syncForegroundPopup(hwnd, info);
 			
 			if(!..app.topmostOverlay.hasOverlay(hwnd)){
 				try{ ..app.topmostOverlay.createOverlay(hwnd); }
@@ -170,7 +196,7 @@ toggleForegroundTopmost = function(){
 	// 设置置顶 - 使用多种方法确保生效
 	applyTopmostState(hwnd, true);
 	
-	topmostWindows[hwnd] = { title = info.title; cls = info.cls };
+	topmostWindows[hwnd] = { title = info.title; cls = info.cls; related = {} };
 	ensureMaintainTimer();
 	try{ ..app.topmostOverlay.createOverlay(hwnd); }
 	return true;
@@ -181,6 +207,7 @@ removeTopmost = function(hwnd){
 	if(!hwnd) return false;
 	
 	if(topmostWindows[hwnd]){
+		clearRelatedTopmost(topmostWindows[hwnd]);
 		applyTopmostState(hwnd, false);
 		
 		topmostWindows[hwnd] = null;
@@ -195,6 +222,7 @@ removeAllTopmost = function(){
 	var count = 0;
 	for(hwnd, info in topmostWindows){
 		if(hwnd && ..win.isWindow(hwnd)){
+			clearRelatedTopmost(info);
 			applyTopmostState(hwnd, false);
 			try{ ..app.topmostOverlay.removeOverlay(hwnd); }
 			count++;
