@@ -28,58 +28,63 @@ isImageFile = function(path){
 	return !!imageExts[ext];
 }
 
-// 获取资源管理器中选中的文件路径
-getSelectedFiles = function(){
-	var files = {};
-	
-	// 获取当前前台窗口
+// 判断前台窗口是否为资源管理器
+isExplorerForeground = function(){
 	var hwnd = ..win.getForeground();
-	if(!hwnd) return files;
+	if(!hwnd) return false, null;
 	
 	var cls = ..win.getClass(hwnd);
-	
-	// Explorer 主窗口或目录窗口
 	if(cls == "ExploreWClass" || cls == "CabinetWClass"){
-		// 通过 Shell COM 接口获取选中文件
-		try{
-			var shell = ..com.CreateObject("Shell.Application");
-			if(!shell) return files;
+		return true, hwnd;
+	}
+	return false, null;
+}
+
+// 获取资源管理器中选中的文件路径
+getSelectedFiles = function(hwnd){
+	var files = {};
+	
+	if(!hwnd) return files;
+	
+	// 通过 Shell COM 接口获取选中文件
+	try{
+		var shell = ..com.CreateObject("Shell.Application");
+		if(!shell) return files;
+		
+		// 遍历所有窗口查找匹配的 Explorer
+		var windows = shell.Windows();
+		for(i=0; windows.Count-1){
+			var w = windows.Item(i);
+			if(!w) continue;
 			
-			// 遍历所有窗口查找匹配的 Explorer
-			var windows = shell.Windows();
-			for(i=0; windows.Count-1){
-				var w = windows.Item(i);
-				if(!w) continue;
-				
-				var wHwnd = 0;
-				try{ wHwnd = w.HWND; } catch(e){ wHwnd = 0; }
-				
-				if(wHwnd != hwnd) continue;
-				
-				// 获取选中项
-				var selItems = w.Document.SelectedItems();
-				for(j=0; selItems.Count-1){
-					var item = selItems.Item(j);
-					if(!item) continue;
-					var path = item.Path;
-					if(#path && ..io.exist(path)){
-						..table.push(files, path);
-					}
+			var wHwnd = 0;
+			try{ wHwnd = w.HWND; } catch(e){ wHwnd = 0; }
+			
+			if(wHwnd != hwnd) continue;
+			
+			// 获取选中项
+			var selItems = w.Document.SelectedItems();
+			for(j=0; selItems.Count-1){
+				var item = selItems.Item(j);
+				if(!item) continue;
+				var path = item.Path;
+				if(#path && ..io.exist(path)){
+					..table.push(files, path);
 				}
-				break;
 			}
+			break;
 		}
-		catch(e){
-			// COM 接口失败
-		}
+	}
+	catch(e){
+		// COM 接口失败
 	}
 	
 	return files;
 }
 
 // 获取选中文件中的第一个图片
-getSelectedImage = function(){
-	var files = getSelectedFiles();
+getSelectedImage = function(hwnd){
+	var files = getSelectedFiles(hwnd);
 	for(i=1; #files){
 		if(isImageFile(files[i])){
 			return files[i];
@@ -97,9 +102,9 @@ closePreview = function(){
 }
 
 // 显示图片预览
-showPreview = function(){
-	var imagePath = getSelectedImage();
-	if(!imagePath) return false;
+showPreview = function(imagePath){
+	if(!imagePath || !#imagePath) return false;
+	if(!..io.exist(imagePath)) return false;
 	
 	// 如果已有预览窗口，先关闭
 	if(previewForm){
@@ -200,18 +205,28 @@ installHook = function(){
 		}
 		
 		// 检查当前前台窗口是否为资源管理器
-		var hwnd = ..win.getForeground();
-		if(!hwnd) return;
+		var isExplorer, hwnd = isExplorerForeground();
+		if(!isExplorer) return;
 		
-		var cls = ..win.getClass(hwnd);
-		if(cls != "ExploreWClass" && cls != "CabinetWClass") return;
+		// 在钩子回调中直接获取选中图片路径（COM调用需快速完成）
+		var imagePath = null;
+		try{
+			imagePath = getSelectedImage(hwnd);
+		}
+		catch(e){
+			// 获取失败，不拦截空格
+			return;
+		}
 		
-		// 尝试显示预览，使用 setTimeout 异步执行避免阻塞钩子
+		// 如果选中的不是图片，不拦截空格，让资源管理器自己处理
+		if(!imagePath) return;
+		
+		// 异步显示预览窗口，避免阻塞钩子
 		..win.setTimeout(function(){
-			showPreview();
-		}, 50);
+			showPreview(imagePath);
+		}, 10);
 		
-		// 拦截空格键，不让它传递到资源管理器
+		// 拦截空格键
 		return true;
 	}
 	
@@ -228,9 +243,10 @@ uninstallHook = function(){
 
 /**intellisense(app.imgPreview)
 isImageFile(path) = 判断文件是否为图片\n返回 true 或 false
-getSelectedFiles() = 获取资源管理器中选中的文件路径列表\n返回字符串数组
-getSelectedImage() = 获取选中文件中的第一个图片路径\n返回路径字符串或 null
-showPreview() = 显示图片预览窗口\n返回是否成功
+isExplorerForeground() = 判断前台窗口是否为资源管理器\n返回 isExplorer, hwnd
+getSelectedFiles(hwnd) = 获取资源管理器中选中的文件路径列表\n返回字符串数组
+getSelectedImage(hwnd) = 获取选中文件中的第一个图片路径\n返回路径字符串或 null
+showPreview(imagePath) = 显示图片预览窗口\n返回是否成功
 closePreview() = 关闭预览窗口
 installHook() = 安装键盘钩子监听空格键\n返回是否成功
 uninstallHook() = 卸载键盘钩子
