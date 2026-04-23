@@ -17,31 +17,33 @@ import win.ui.atom;
 import win.dlg.message;
 import fonts.fontAwesomeSub;
 /*DSG{{*/
-mainForm = win.form(text="ImTip 8.4 - 智能桌面助手";right=336;bottom=490;bgcolor=0xF5F5F5;border="none";max=false;min=false)
+mainForm = win.form(text="ImTip 8.4 - 智能桌面助手";right=336;bottom=515;bgcolor=0xF5F5F5;border="none";max=false;min=false)
 mainForm.add(
 btnClose={cls="plus";text="×";left=309;top=0;right=337;bottom=28;color=0xFFFFFF;dr=1;dt=1;font=LOGFONT(h=-22);notify=1;z=10};
 btnImTip={cls="plus";text="配置";left=216;top=112;right=286;bottom=140;bgcolor=0x6BA800;border={radius=4};color=0xFFFFFF;dl=1;dt=1;font=LOGFONT(h=-13);notify=1;z=7};
 btnMemReduce={cls="plus";text="清理";left=216;top=214;right=286;bottom=242;bgcolor=0x2196F3;border={radius=4};color=0xFFFFFF;dl=1;dt=1;font=LOGFONT(h=-13);notify=1;z=15};
 cardImeTip={cls="plus";left=20;top=80;right=316;bottom=154;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};dl=1;dr=1;dt=1;z=2};
-cardMemReduce={cls="plus";left=20;top=175;right=316;bottom=280;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};dl=1;dr=1;z=14};
-cardSystem={cls="plus";left=20;top=310;right=316;bottom=354;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};db=1;dl=1;dr=1;z=1};
-cardImgPreview={cls="plus";left=20;top=363;right=316;bottom=410;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};dl=1;dr=1;z=21};
-cardTopmost={cls="plus";left=20;top=418;right=316;bottom=480;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};db=1;dl=1;dr=1;z=3};
+cardMemReduce={cls="plus";left=20;top=175;right=316;bottom=305;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};dl=1;dr=1;z=14};
+cardSystem={cls="plus";left=20;top=335;right=316;bottom=379;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};db=1;dl=1;dr=1;z=1};
+cardImgPreview={cls="plus";left=20;top=388;right=316;bottom=435;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};dl=1;dr=1;z=21};
+cardTopmost={cls="plus";left=20;top=443;right=316;bottom=505;bgcolor=0xFFFFFF;border={color=0xFFE8E8E8;radius=12;width=1};db=1;dl=1;dr=1;z=3};
+cbAutoCleanInterval={cls="combobox";left=103;top=260;right=209;bottom=280;dl=1;dt=1;edge=1;items={};mode="dropdownlist";z=25};
 cboCleanMode={cls="combobox";left=103;top=236;right=209;bottom=256;dl=1;dt=1;edge=1;items={};mode="dropdownlist";z=20};
 chkAutoClean={cls="plus";text="自动清理";left=101;top=215;right=181;bottom=235;align="left";bgcolor=0xFFFFFF;dl=1;dt=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=19};
 chkImeBarDisabled={cls="plus";text="启用";left=97;top=118;right=177;bottom=138;align="left";bgcolor=0xFFFFFF;dl=1;dt=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=6};
-chkSysRun={cls="plus";text="开机启动";left=125;top=318;right=308;bottom=343;align="left";bgcolor=0xFFFFFF;db=1;dl=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=9};
-chkImgPreview={cls="plus";text="空格预览文件";left=100;top=378;right=220;bottom=398;align="left";bgcolor=0xFFFFFF;dl=1;dr=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=22};
-chkTopmost={cls="plus";text="置顶窗口";left=100;top=448;right=200;bottom=468;align="left";bgcolor=0xFFFFFF;db=1;dl=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=11};
-hotkeyTopmost={cls="hotkey";left=220;top=447;right=300;bottom=467;db=1;dl=1;edge=1;z=12};
+chkSysRun={cls="plus";text="开机启动";left=125;top=343;right=308;bottom=368;align="left";bgcolor=0xFFFFFF;db=1;dl=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=9};
+chkImgPreview={cls="plus";text="空格预览文件";left=100;top=403;right=220;bottom=423;align="left";bgcolor=0xFFFFFF;dl=1;dr=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=22};
+chkTopmost={cls="plus";text="置顶窗口";left=100;top=473;right=200;bottom=493;align="left";bgcolor=0xFFFFFF;db=1;dl=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=11};
+hotkeyTopmost={cls="hotkey";left=220;top=472;right=300;bottom=492;db=1;dl=1;edge=1;z=12};
 lblImeTipTitle={cls="plus";text="输入提示";left=40;top=85;right=230;bottom=110;align="left";bgcolor=0xFFFFFF;color=0x333333;dl=1;dt=1;font=LOGFONT(h=-16;weight=600);z=5};
 lblMemInfo={cls="static";text="内存: ";left=128;top=187;right=299;bottom=208;bgcolor=0xFFFFFF;color=0x666666;dl=1;dt=1;z=16};
 lblMemReduceTitle={cls="plus";text="内存优化";left=40;top=182;right=115;bottom=207;align="left";bgcolor=0xFFFFFF;color=0x333333;dl=1;dt=1;font=LOGFONT(h=-16;weight=600);z=17};
-lblSystemTitle={cls="plus";text="系统选项";left=40;top=317;right=150;bottom=342;align="left";bgcolor=0xFFFFFF;color=0x333333;db=1;dl=1;font=LOGFONT(h=-16;weight=600);z=8};
-lblImgPreviewTitle={cls="plus";text="文件预览";left=40;top=369;right=150;bottom=394;align="left";bgcolor=0xFFFFFF;color=0x333333;dl=1;dr=1;font=LOGFONT(h=-16;weight=600);z=23};
-lblImgPreviewHint={cls="static";text="在资源管理器中按空格键快速预览图片、视频或 PDF";left=100;top=395;right=308;bottom=410;bgcolor=0xFFFFFF;color=0x999999;dl=1;dr=1;font=LOGFONT(h=-11);z=24};
-plus={cls="plus";text="置顶窗口";left=40;top=424;right=150;bottom=449;align="left";bgcolor=0xFFFFFF;color=0x333333;db=1;dl=1;font=LOGFONT(h=-16;weight=600);z=13};
-progressMem={cls="progress";left=99;top=263;right=308;bottom=273;dl=1;dt=1;max=0;min=0;z=18};
+lblAutoCleanInterval={cls="static";text="清理间隔";left=40;top=262;right=95;bottom=280;bgcolor=0xFFFFFF;color=0x666666;dl=1;dt=1;font=LOGFONT(h=-12);z=26};
+lblSystemTitle={cls="plus";text="系统选项";left=40;top=342;right=150;bottom=367;align="left";bgcolor=0xFFFFFF;color=0x333333;db=1;dl=1;font=LOGFONT(h=-16;weight=600);z=8};
+lblImgPreviewTitle={cls="plus";text="文件预览";left=40;top=394;right=150;bottom=419;align="left";bgcolor=0xFFFFFF;color=0x333333;dl=1;dr=1;font=LOGFONT(h=-16;weight=600);z=23};
+lblImgPreviewHint={cls="static";text="在资源管理器中按空格键快速预览图片、视频或 PDF";left=100;top=420;right=308;bottom=435;bgcolor=0xFFFFFF;color=0x999999;dl=1;dr=1;font=LOGFONT(h=-11);z=24};
+plus={cls="plus";text="置顶窗口";left=40;top=449;right=150;bottom=474;align="left";bgcolor=0xFFFFFF;color=0x333333;db=1;dl=1;font=LOGFONT(h=-16;weight=600);z=13};
+progressMem={cls="progress";left=99;top=287;right=308;bottom=297;dl=1;dt=1;max=0;min=0;z=18};
 titleBar={cls="bk";text="    IᵐTⁱᵖ 智能桌面助手 8.4";left=0;top=0;right=338;bottom=60;align="left";bgcolor=0xD77800;color=0xFFFFFF;dl=1;dr=1;dt=1;font=LOGFONT(h=-18;weight=600);z=4}
 )
 /*}}*/
@@ -81,6 +83,17 @@ import config;
 // 初始化清理模式下拉框
 mainForm.cboCleanMode.items = {"普通清理", "深度清理"};
 mainForm.cboCleanMode.selIndex = config.memReduce.cleanMode == "deep" ? 1 : 0;
+mainForm.cbAutoCleanInterval.items = {"5 分钟", "10 分钟", "15 分钟", "30 分钟", "60 分钟"};
+
+var autoCleanIntervals = {5,10,15,30,60};
+var autoCleanIntervalIndex = 4;
+for(i=1; #autoCleanIntervals; 1){
+	if(autoCleanIntervals[i] == config.memReduce.autoInterval){
+		autoCleanIntervalIndex = i;
+		break;
+	}
+}
+mainForm.cbAutoCleanInterval.selIndex = autoCleanIntervalIndex - 1;
 
 mainForm.show();
  
@@ -336,10 +349,31 @@ mainForm.btnMemReduce.oncommand = function(id,event){
 }
 
 // 自动清理配置
+var autoCleanTimerId = null;
+
+var restartAutoCleanTimer = function(){
+	if(autoCleanTimerId){
+		mainForm.clearInterval(autoCleanTimerId);
+		autoCleanTimerId = null;
+	}
+
+	if(!config.memReduce.enabled) return;
+
+	var intervalMinutes = tonumber(config.memReduce.autoInterval);
+	if(!intervalMinutes || intervalMinutes < 1){
+		intervalMinutes = 30;
+		config.memReduce.autoInterval = intervalMinutes;
+		config.memReduce.save();
+	}
+
+	autoCleanTimerId = mainForm.setInterval(autoCleanTimer, intervalMinutes * 60 * 1000);
+}
+
 mainForm.chkAutoClean.checked = config.memReduce.enabled;
 mainForm.chkAutoClean.oncommand = function(id,event){
 	config.memReduce.enabled = owner.checked;
 	config.memReduce.save();
+	restartAutoCleanTimer();
 }
 
 // 清理模式选择
@@ -349,22 +383,27 @@ mainForm.cboCleanMode.oncommand = function(id,event){
 	config.memReduce.save();
 }
 
-// 定时自动清理
-autoCleanTimer = function(){
-	if(!config.memReduce.enabled) return;
-	
-	var info = app.memReduce.getStatus();
-	
-	// 当内存使用超过阈值时自动清理
-	if(info.memoryLoad >= config.memReduce.threshold){
-		var mode = config.memReduce.cleanMode;
-		app.memReduce.doClean(mode);
-		updateMemInfo();
-	}
+mainForm.cbAutoCleanInterval.oncommand = function(id,event){
+	var selIndex = owner.selIndex + 1;
+	var intervalMinutes = autoCleanIntervals[selIndex];
+	if(!intervalMinutes) return;
+
+	config.memReduce.autoInterval = intervalMinutes;
+	config.memReduce.save();
+	restartAutoCleanTimer();
 }
 
-// 启动定时自动清理（每分钟检查一次）
-mainForm.setInterval(autoCleanTimer, 60000);
+// 定时自动清理
+autoCleanTimer = function(){
+	if(!config.memReduce.enabled) return false;
+
+	var mode = config.memReduce.cleanMode;
+	app.memReduce.doClean(mode);
+	updateMemInfo();
+}
+
+// 启动定时自动清理（按配置间隔执行）
+restartAutoCleanTimer();
 
 // 开机启动
 mainForm.chkSysRun.checked = config.setting.sysRun;
