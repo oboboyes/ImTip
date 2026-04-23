@@ -13,31 +13,41 @@ namespace app.trayIcon;
 
 // 生成显示数字的图标
 generateIcon = function(number, width = 16, height = 16){
+	var renderScale = 2;
+	var renderWidth = width * renderScale;
+	var renderHeight = height * renderScale;
+	var displayNumber = ..math.max(0, ..math.min(99, number));
+	var text = tostring(displayNumber);
+
 	// 创建位图
-	var bitmap = ..gdip.bitmap(width, height);
+	var bitmap = ..gdip.bitmap(renderWidth, renderHeight);
 	var g = ..gdip.graphics(bitmap);
 	
 	// 设置背景色（根据数值变化）
 	var bgColor;
-	if(number < 70){
+	if(displayNumber < 70){
 		bgColor = 0xFF4CAF50;  // 绿色 - 低内存使用
 	}
-	elseif(number < 80){
+	elseif(displayNumber < 80){
 		bgColor = 0xFFFF9800;  // 橙色 - 中等内存使用
 	}
 	else {
 		bgColor = 0xFFF44336;  // 红色 - 高内存使用
 	}
+	var borderColor = 0xC0FFFFFF;
 	
 	// 创建画刷
 	var brush = ..gdip.solidBrush(bgColor);
+	var borderBrush = ..gdip.solidBrush(borderColor);
 	
-	// 绘制背景（圆角矩形，增大圆角半径）
-	g.fillRoundRect(brush, 0, 0, width, height, 4);
+	// 用更高分辨率先绘制，再交给系统缩放，托盘里会更锐利
+	g.fillRoundRect(borderBrush, 0, 0, renderWidth, renderHeight, 10);
+	g.fillRoundRect(brush, 2, 2, renderWidth - 4, renderHeight - 4, 8);
 	
 	// 绘制数字
-	var fontFamily = ..gdip.family("Arial");
-	var font = ..gdip.font(fontFamily, 10, 1/*_GdipFontStyleBold*/);
+	var fontFamily = ..gdip.family("Segoe UI");
+	var fontSize = #text > 1 ? 14 : 17;
+	var font = ..gdip.font(fontFamily, fontSize, 1/*_GdipFontStyleBold*/);
 	var textBrush = ..gdip.solidBrush(0xFFFFFFFF);  // 白色文字
 	var format = ..gdip.stringformat();
 	
@@ -45,10 +55,8 @@ generateIcon = function(number, width = 16, height = 16){
 	format.align = 1/*_GdipStringAlignmentCenter*/;
 	format.lineAlign = 1/*_GdipStringAlignmentCenter*/;
 	
-	var text = tostring(number);
-	
 	// 使用整个图标区域作为文字布局区域，让format自动居中
-	var textRect = ::RECTF(0, 0, width, height);
+	var textRect = ::RECTF(0, -1, renderWidth, renderHeight - 1);
 	
 	g.drawString(text, font, textRect, format, textBrush);
 	

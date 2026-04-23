@@ -102,8 +102,17 @@ if(!config.topmost.hotkeyVk) {
 // 内存清理默认配置
 if(config.memReduce.enabled === null) {
 	config.memReduce.enabled = false;        // 是否启用自动清理
+}
+
+if(config.memReduce.autoInterval === null) {
 	config.memReduce.autoInterval = 30;      // 自动清理间隔（分钟）
+}
+
+if(config.memReduce.cleanMode === null) {
 	config.memReduce.cleanMode = "normal";   // 清理模式: "normal" 或 "deep"
+}
+
+if(config.memReduce.threshold === null) {
 	config.memReduce.threshold = 80;         // 内存阈值，超过此值触发清理
 }
 

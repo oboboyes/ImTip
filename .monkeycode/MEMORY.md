@@ -81,3 +81,11 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
   - `lib/app/imgPreview.aardio` 通过 `Shell.Application` COM 读取资源管理器当前选中文件，因此该模块需要显式 `import com;`。
   - 图片仍使用 ImTip 自己的无边框窗口预览；视频和 PDF 通过模拟 `Alt+P` 切换资源管理器预览窗格，以复用系统预览能力。
   - 在 `app.imgPreview` 这类命名空间模块里要做异步延时，应调用 `mainForm.setTimeout()` 这样的窗体定时器，而不是 `win.setTimeout()`。
+
+[内存清理自动执行方式]
+- Date: 2026-04-23
+- Context: Agent 在执行“增加自动清理间隔设置并确保自动清理有效”时发现
+- Category: 代码模式
+- Instructions:
+  - `main.aardio` 中的自动清理应通过 `mainForm.setInterval()` 按 `config.memReduce.autoInterval` 指定的分钟数直接执行清理，而不是固定每分钟轮询后再判断。
+  - `lib/config.aardio` 里 `config.memReduce` 的各字段默认值需要分别判空初始化，避免旧配置里只有部分字段缺失时自动清理配置失效。
