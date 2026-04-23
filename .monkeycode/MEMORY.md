@@ -71,3 +71,13 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
   - `lib/app/topmost.aardio` 可以输出置顶窗口诊断快照，用于记录 target、foreground、candidate 窗口的 `owner`、`rootOwner`、`style` 和 `exStyle`。
   - 诊断快照文件路径由 `app.topmost.getDebugSnapshotPath()` 返回，默认写到 ImTip 的 appData 目录下 `topmost-debug.txt`。
   - 诊断快照不应依赖特定标题命中；只要成功置顶窗口，就应立即先写出一份初始快照，避免宿主窗口标题不含“微信”时完全不落盘。
+
+[文件预览功能结构]
+- Date: 2026-04-23
+- Context: Agent 在执行“修复空格预览图片不生效，同时增加支持视频、PDF预览”时发现
+- Category: 代码结构
+- Instructions:
+  - 文件预览入口在 `main.aardio` 和 `lib/ui/appTrayMenu.aardio`，统一通过 `config.imgPreview.enabled` 控制开关，并调用 `app.imgPreview.installHook()` 安装全局键盘钩子。
+  - `lib/app/imgPreview.aardio` 通过 `Shell.Application` COM 读取资源管理器当前选中文件，因此该模块需要显式 `import com;`。
+  - 图片仍使用 ImTip 自己的无边框窗口预览；视频和 PDF 通过模拟 `Alt+P` 切换资源管理器预览窗格，以复用系统预览能力。
+  - 在 `app.imgPreview` 这类命名空间模块里要做异步延时，应调用 `mainForm.setTimeout()` 这样的窗体定时器，而不是 `win.setTimeout()`。

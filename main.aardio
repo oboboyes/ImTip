@@ -31,15 +31,15 @@ cboCleanMode={cls="combobox";left=103;top=236;right=209;bottom=256;dl=1;dt=1;edg
 chkAutoClean={cls="plus";text="自动清理";left=101;top=215;right=181;bottom=235;align="left";bgcolor=0xFFFFFF;dl=1;dt=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=19};
 chkImeBarDisabled={cls="plus";text="启用";left=97;top=118;right=177;bottom=138;align="left";bgcolor=0xFFFFFF;dl=1;dt=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=6};
 chkSysRun={cls="plus";text="开机启动";left=125;top=318;right=308;bottom=343;align="left";bgcolor=0xFFFFFF;db=1;dl=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=9};
-chkImgPreview={cls="plus";text="空格预览图片";left=100;top=378;right=220;bottom=398;align="left";bgcolor=0xFFFFFF;dl=1;dr=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=22};
+chkImgPreview={cls="plus";text="空格预览文件";left=100;top=378;right=220;bottom=398;align="left";bgcolor=0xFFFFFF;dl=1;dr=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=22};
 chkTopmost={cls="plus";text="置顶窗口";left=100;top=448;right=200;bottom=468;align="left";bgcolor=0xFFFFFF;db=1;dl=1;iconStyle={align="left";font=LOGFONT(h=-14;name='FontAwesome')};iconText='\uF0C8 ';notify=1;textPadding={left=20};z=11};
 hotkeyTopmost={cls="hotkey";left=220;top=447;right=300;bottom=467;db=1;dl=1;edge=1;z=12};
 lblImeTipTitle={cls="plus";text="输入提示";left=40;top=85;right=230;bottom=110;align="left";bgcolor=0xFFFFFF;color=0x333333;dl=1;dt=1;font=LOGFONT(h=-16;weight=600);z=5};
 lblMemInfo={cls="static";text="内存: ";left=128;top=187;right=299;bottom=208;bgcolor=0xFFFFFF;color=0x666666;dl=1;dt=1;z=16};
 lblMemReduceTitle={cls="plus";text="内存优化";left=40;top=182;right=115;bottom=207;align="left";bgcolor=0xFFFFFF;color=0x333333;dl=1;dt=1;font=LOGFONT(h=-16;weight=600);z=17};
 lblSystemTitle={cls="plus";text="系统选项";left=40;top=317;right=150;bottom=342;align="left";bgcolor=0xFFFFFF;color=0x333333;db=1;dl=1;font=LOGFONT(h=-16;weight=600);z=8};
-lblImgPreviewTitle={cls="plus";text="图片预览";left=40;top=369;right=150;bottom=394;align="left";bgcolor=0xFFFFFF;color=0x333333;dl=1;dr=1;font=LOGFONT(h=-16;weight=600);z=23};
-lblImgPreviewHint={cls="static";text="在资源管理器中按空格键快速预览图片";left=100;top=395;right=308;bottom=410;bgcolor=0xFFFFFF;color=0x999999;dl=1;dr=1;font=LOGFONT(h=-11);z=24};
+lblImgPreviewTitle={cls="plus";text="文件预览";left=40;top=369;right=150;bottom=394;align="left";bgcolor=0xFFFFFF;color=0x333333;dl=1;dr=1;font=LOGFONT(h=-16;weight=600);z=23};
+lblImgPreviewHint={cls="static";text="在资源管理器中按空格键快速预览图片、视频或 PDF";left=100;top=395;right=308;bottom=410;bgcolor=0xFFFFFF;color=0x999999;dl=1;dr=1;font=LOGFONT(h=-11);z=24};
 plus={cls="plus";text="置顶窗口";left=40;top=424;right=150;bottom=449;align="left";bgcolor=0xFFFFFF;color=0x333333;db=1;dl=1;font=LOGFONT(h=-16;weight=600);z=13};
 progressMem={cls="progress";left=99;top=263;right=308;bottom=273;dl=1;dt=1;max=0;min=0;z=18};
 titleBar={cls="bk";text="    IᵐTⁱᵖ 智能桌面助手 8.4";left=0;top=0;right=338;bottom=60;align="left";bgcolor=0xD77800;color=0xFFFFFF;dl=1;dr=1;dt=1;font=LOGFONT(h=-18;weight=600);z=4}

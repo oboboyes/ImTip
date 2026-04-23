@@ -2,6 +2,7 @@
 import win;
 import winex;
 import win.ui;
+import com;
 import key.hook;
 import gdip.bitmap;
 import config;
@@ -10,6 +11,10 @@ namespace app.imgPreview;
 
 // 预览窗口
 var previewForm = null;
+
+// 资源管理器预览窗格状态
+var shellPreviewHwnd = null;
+var shellPreviewActive = false;
 
 // 键盘钩子
 var kbHook = null;
@@ -21,11 +26,31 @@ var imageExts = {
 	[".ico"]=1; [".svg"]=1; [".heic"]=1; [".heif"]=1;
 };
 
+// 支持的视频扩展名
+var videoExts = {
+	[".mp4"]=1; [".m4v"]=1; [".mov"]=1; [".avi"]=1;
+	[".mkv"]=1; [".wmv"]=1; [".flv"]=1; [".webm"]=1;
+	[".mpeg"]=1; [".mpg"]=1; [".ts"]=1; [".m2ts"]=1;
+};
+
+// 支持的文档扩展名
+var documentExts = {
+	[".pdf"]=1;
+};
+
+// 获取文件预览类型
+getPreviewType = function(path){
+	if(!#path) return null;
+	var ext = ..string.lower(..io.split(path).ext);
+	if(imageExts[ext]) return "image";
+	if(videoExts[ext]) return "video";
+	if(documentExts[ext]) return "document";
+	return null;
+}
+
 // 判断文件是否为图片
 isImageFile = function(path){
-	if(!#path) return false;
-	var ext = ..string.lower(..io.split(path).ext);
-	return !!imageExts[ext];
+	return getPreviewType(path) == "image";
 }
 
 // 获取资源管理器中选中的文件路径
@@ -78,14 +103,41 @@ getSelectedFiles = function(){
 }
 
 // 获取选中文件中的第一个图片
-getSelectedImage = function(){
+getSelectedPreviewFile = function(){
 	var files = getSelectedFiles();
 	for(i=1; #files){
-		if(isImageFile(files[i])){
-			return files[i];
+		var previewType = getPreviewType(files[i]);
+		if(previewType){
+			return {
+				path = files[i];
+				type = previewType;
+				ownerHwnd = ..win.getForeground();
+			}
 		}
 	}
 	return null;
+}
+
+// 模拟 Alt+P 切换资源管理器预览窗格
+toggleExplorerPreviewPane = function(hwnd){
+	if(!hwnd) return false;
+	..win.setForeground(hwnd);
+	::User32.keybd_event(0x12/*_VK_MENU*/,0,0,0);
+	::User32.keybd_event(0x50/*_VK_P*/,0,0,0);
+	::User32.keybd_event(0x50/*_VK_P*/,0,2/*_KEYEVENTF_KEYUP*/,0);
+	::User32.keybd_event(0x12/*_VK_MENU*/,0,2/*_KEYEVENTF_KEYUP*/,0);
+	return true;
+}
+
+// 显示资源管理器预览窗格
+showShellPreview = function(hwnd){
+	if(!hwnd) return false;
+	if(shellPreviewActive && shellPreviewHwnd == hwnd) return true;
+	if(shellPreviewActive) closePreview();
+	if(!toggleExplorerPreviewPane(hwnd)) return false;
+	shellPreviewHwnd = hwnd;
+	shellPreviewActive = true;
+	return true;
 }
 
 // 关闭预览窗口
@@ -94,6 +146,11 @@ closePreview = function(){
 		previewForm.close();
 		previewForm = null;
 	}
+	if(shellPreviewActive && shellPreviewHwnd){
+		toggleExplorerPreviewPane(shellPreviewHwnd);
+	}
+	shellPreviewHwnd = null;
+	shellPreviewActive = false;
 }
 
 // 显示图片预览
@@ -110,6 +167,7 @@ showPreview = function(imagePath){
 	// 加载图片获取尺寸
 	var bmp = ..gdip.bitmap(imagePath);
 	if(!bmp) return false;
+	closePreview();
 	
 	var imgW, imgH = bmp.width, bmp.height;
 	bmp = null;
@@ -117,7 +175,15 @@ showPreview = function(imagePath){
 	if(!imgW || !imgH) return false;
 	
 	// 获取屏幕工作区大小
-	var screenW, screenH = ..win.getWorkArea();
+	var workLeft, workTop, workRight, workBottom = ..win.getWorkArea();
+	var screenW = workRight - workLeft;
+	var screenH = workBottom - workTop;
+	if(screenW <= 0 || screenH <= 0){
+		screenW = ::User32.GetSystemMetrics(0/*_SM_CXSCREEN*/);
+		screenH = ::User32.GetSystemMetrics(1/*_SM_CYSCREEN*/);
+		workLeft = 0;
+		workTop = 0;
+	}
 	
 	// 计算预览窗口大小（图片按比例缩放，最大占屏幕 80%）
 	var maxW = screenW * 0.8;
@@ -133,8 +199,8 @@ showPreview = function(imagePath){
 	var winH = ..math.round(imgH * scale);
 	
 	// 窗口居中
-	var x = ..math.round((screenW - winW) / 2);
-	var y = ..math.round((screenH - winH) / 2);
+	var x = workLeft + ..math.round((screenW - winW) / 2);
+	var y = workTop + ..math.round((screenH - winH) / 2);
 	
 	// 创建预览窗口
 	previewForm = ..win.form(
@@ -177,21 +243,20 @@ showPreview = function(imagePath){
 }
 
 // 异步执行预览逻辑（从钩子回调中调用，避免阻塞）
-var doPreviewAsync = function(){
-	// 获取选中图片
-	var imagePath = null;
+var doPreviewAsync = function(previewTarget){
+	if(!previewTarget || !previewTarget.type || !previewTarget.path) return;
+
 	try{
-		imagePath = getSelectedImage();
+		if(previewTarget.type == "image"){
+			showPreview(previewTarget.path);
+		}
+		else {
+			showShellPreview(previewTarget.ownerHwnd);
+		}
 	}
 	catch(e){
 		return;
 	}
-	
-	// 如果选中的不是图片，不做任何处理
-	if(!imagePath) return;
-	
-	// 显示预览
-	showPreview(imagePath);
 }
 
 // 安装键盘钩子
@@ -211,6 +276,14 @@ installHook = function(){
 	kbHook.proc = function(msg,vkCode,scanCode,injected,flags,timeStamp,extraInfo){
 		// 忽略模拟按键
 		if(injected) return;
+
+		if(msg == 0x100/*_WM_KEYDOWN*/ && vkCode == 0x1B/*_VK_ESCAPE*/){
+			if(previewForm || shellPreviewActive){
+				closePreview();
+				return true;
+			}
+			return;
+		}
 		
 		// 仅处理按键按下消息
 		if(msg != 0x100/*_WM_KEYDOWN*/ && msg != 0x104/*_WM_SYSKEYDOWN*/) return;
@@ -218,21 +291,25 @@ installHook = function(){
 		// 仅处理空格键
 		if(vkCode != 0x20/*_VK_SPACE*/) return;
 		
-		// 如果已有预览窗口，关闭它并拦截空格
-		if(previewForm){
+		// 如果已有预览窗口或预览窗格，关闭它并拦截空格
+		if(previewForm || shellPreviewActive){
 			closePreview();
 			return true;
 		}
-		
-		// 检查当前前台窗口是否为资源管理器（轻量操作，不涉及COM）
-		var hwnd = ..win.getForeground();
-		if(!hwnd) return;
-		
-		var cls = ..win.getClass(hwnd);
-		if(cls != "ExploreWClass" && cls != "CabinetWClass") return;
-		
-		// 异步执行预览逻辑，避免COM调用阻塞钩子
-		..win.setTimeout(doPreviewAsync, 10);
+
+		var previewTarget = null;
+		try{
+			previewTarget = getSelectedPreviewFile();
+		}
+		catch(e){
+			return;
+		}
+		if(!previewTarget) return;
+
+		// 异步执行预览逻辑，避免在钩子里直接创建窗口
+		..mainForm.setTimeout(function(){
+			doPreviewAsync(previewTarget);
+		}, 10);
 		
 		// 拦截空格键
 		return true;
@@ -252,7 +329,7 @@ uninstallHook = function(){
 /**intellisense(app.imgPreview)
 isImageFile(path) = 判断文件是否为图片\n返回 true 或 false
 getSelectedFiles() = 获取资源管理器中选中的文件路径列表\n返回字符串数组
-getSelectedImage() = 获取选中文件中的第一个图片路径\n返回路径字符串或 null
+getSelectedPreviewFile() = 获取选中文件中的第一个可预览文件\n返回包含路径和类型的对象或 null
 showPreview(imagePath) = 显示图片预览窗口\n返回是否成功
 closePreview() = 关闭预览窗口
 installHook() = 安装键盘钩子监听空格键\n返回是否成功
