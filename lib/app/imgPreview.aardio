@@ -19,6 +19,11 @@ var shellPreviewActive = false;
 // 键盘钩子
 var kbHook = null;
 
+// 当前预览的图片列表（用于幻灯片模式）
+var previewFiles = {};
+var previewIndex = 1;
+var currentScale = 1;
+
 // 支持的图片扩展名
 var imageExts = {
 	[".jpg"]=1; [".jpeg"]=1; [".png"]=1; [".gif"]=1;
@@ -51,6 +56,35 @@ getPreviewType = function(path){
 // 判断文件是否为图片
 isImageFile = function(path){
 	return getPreviewType(path) == "image";
+}
+
+// 获取目录下所有支持预览的图片文件
+getImageFilesInDir = function(filePath){
+	if(!#filePath) return {};
+	
+	var dir = ..io.split(filePath).dir;
+	var name = ..io.split(filePath).name;
+	var ext = ..io.split(filePath).ext;
+	if(!#dir or !#name) return {};
+	
+	var files = {};
+	try{
+		var iter, state = ..io.dir(dir);
+		if(!iter) return {};
+		
+		for(i,f in iter){
+			if(f.hidden or f.directory) continue;
+			var fExt = ..string.lower(..io.split(f.filename).ext);
+			if(imageExts[fExt]){
+				var fullPath = ..io.joinpath(dir, f.filename);
+				..table.push(files, fullPath);
+			}
+		}
+	}
+	catch(e){}
+	
+	..table.sort(files);
+	return files;
 }
 
 // 获取资源管理器中选中的文件路径
@@ -151,6 +185,9 @@ closePreview = function(){
 	}
 	shellPreviewHwnd = null;
 	shellPreviewActive = false;
+	previewFiles = {};
+	previewIndex = 1;
+	currentScale = 1;
 }
 
 // 显示图片预览
@@ -163,6 +200,16 @@ showPreview = function(imagePath){
 		previewForm.close();
 		previewForm = null;
 	}
+	
+	// 获取同目录图片列表用于幻灯片模式
+	previewFiles = getImageFilesInDir(imagePath);
+	for(i=1; #previewFiles){
+		if(previewFiles[i] == imagePath){
+			previewIndex = i;
+			break;
+		}
+	}
+	currentScale = 1;
 	
 	// 加载图片获取尺寸
 	var bmp = ..gdip.bitmap(imagePath);
@@ -202,37 +249,86 @@ showPreview = function(imagePath){
 	var x = workLeft + ..math.round((screenW - winW) / 2);
 	var y = workTop + ..math.round((screenH - winH) / 2);
 	
-	// 创建预览窗口
+	// 创建预览窗口（带阴影边框）
 	previewForm = ..win.form(
 		text="图片预览 - " + ..io.split(imagePath).name;
 		left=x; top=y; right=x+winW; bottom=y+winH;
 		border="none";
 		max=false; min=false;
-		bgcolor=0x000000;
+		bgcolor=0x1A1A1A;
+		exmode="toolwindow";
 	);
 	
 	previewForm.add(
-		imgView={cls="plus"; left=0; top=0; right=winW; bottom=winH; dl=1; dt=1; dr=1; db=1; z=1};
+		imgView={cls="plus"; left=2; top=2; right=winW-2; bottom=winH-2; dl=1; dt=1; dr=1; db=1; z=1; background = imagePath};
 	);
 	
-	// 设置图片背景
-	previewForm.imgView.background = imagePath;
+	// 添加阴影边框
+	previewForm.onDrawBackground = function(dc, rc){
+		// 绘制背景
+		dc.fillRect(0x1A1A1A, rc.left, rc.top, rc.right, rc.bottom);
+		return true;
+	};
 	
 	// 点击关闭预览
 	previewForm.imgView.onMouseDown = function(wParam,lParam){
 		closePreview();
 	}
 	
-	// 按空格或ESC关闭预览
+	// 按方向键或空格/ESC关闭预览
 	previewForm.onKeyDown = function(vk,flags){
-		if(vk == 0x20/*_VK_SPACE*/ || vk == 0x1B/*_VK_ESCAPE*/){
+		if(vk == 0x1B/*_VK_ESCAPE*/ or vk == 0x20/*_VK_SPACE*/){
 			closePreview();
+		}
+		elseif(vk == 0x25/*_VK_LEFT*/){
+			// 上一张
+			if(#previewFiles > 1){
+				previewIndex--;
+				if(previewIndex < 1) previewIndex = #previewFiles;
+				loadCurrentImage();
+			}
+		}
+		elseif(vk == 0x27/*_VK_RIGHT*/){
+			// 下一张
+			if(#previewFiles > 1){
+				previewIndex++;
+				if(previewIndex > #previewFiles) previewIndex = 1;
+				loadCurrentImage();
+			}
+		}
+		elseif(vk == 0x21/*_VK_PRIOR*/ or vk == 0x22/*_VK_NEXT*/){
+			// PageUp/PageDown 也支持切换
+			if(#previewFiles > 1){
+				if(vk == 0x21/*_VK_PRIOR*/){
+					previewIndex--;
+					if(previewIndex < 1) previewIndex = #previewFiles;
+				}
+				else{
+					previewIndex++;
+					if(previewIndex > #previewFiles) previewIndex = 1;
+				}
+				loadCurrentImage();
+			}
 		}
 	}
 	
-	// 鼠标滚轮关闭预览
+	// 鼠标滚轮缩放或关闭
 	previewForm.onMouseWheel = function(wParam,lParam){
-		closePreview();
+		var delta = ..math.sign(..math.highdw(lParam));
+		if(delta > 0){
+			// 放大
+			currentScale = ..math.min(currentScale * 1.2, 5);
+			resizePreview();
+		}
+		elseif(delta < 0){
+			// 缩小
+			currentScale = ..math.max(currentScale / 1.2, 0.2);
+			if currentScale < 0.3 {
+				closePreview();
+				return;
+			}
+			resizePreview();
+		}
 	}
 	
 	// 显示窗口
@@ -240,6 +336,56 @@ showPreview = function(imagePath){
 	..win.setForeground(previewForm.hwnd);
 	
 	return true;
+}
+
+// 加载当前图片到预览窗口
+loadCurrentImage = function(){
+	if(!previewForm or #previewFiles == 0 or previewIndex < 1 or previewIndex > #previewFiles) return;
+	var imagePath = previewFiles[previewIndex];
+	if(!..io.exist(imagePath)) return;
+	
+	var bmp = ..gdip.bitmap(imagePath);
+	if(!bmp) return;
+	
+	var imgW, imgH = bmp.width, bmp.height;
+	bmp = null;
+	
+	if(!imgW || !imgH) return;
+	
+	var workLeft, workTop, workRight, workBottom = ..win.getWorkArea();
+	var screenW = workRight - workLeft;
+	var screenH = workBottom - workTop;
+	if(screenW <= 0 || screenH <= 0){
+		screenW = ::User32.GetSystemMetrics(0/*_SM_CXSCREEN*/);
+		screenH = ::User32.GetSystemMetrics(1/*_SM_CYSCREEN*/);
+		workLeft = 0;
+		workTop = 0;
+	}
+	
+	var maxW = screenW * 0.8;
+	var maxH = screenH * 0.8;
+	var scale = 1;
+	if(imgW > maxW || imgH > maxH){
+		var scaleX = maxW / imgW;
+		var scaleY = maxH / imgH;
+		scale = ..math.min(scaleX, scaleY);
+	}
+	
+	scale = scale * currentScale;
+	var winW = ..math.round(imgW * scale);
+	var winH = ..math.round(imgH * scale);
+	
+	var x = workLeft + ..math.round((screenW - winW) / 2);
+	var y = workTop + ..math.round((screenH - winH) / 2);
+	
+	previewForm.imgView.background = imagePath;
+	previewForm.setPos(x, y, winW, winH);
+	previewForm.text = "图片预览 - " + ..io.split(imagePath).name .. " (" + previewIndex + "/" + #previewFiles + ")";
+}
+
+// 根据当前缩放重新调整窗口大小
+resizePreview = function(){
+	loadCurrentImage();
 }
 
 // 异步执行预览逻辑（从钩子回调中调用，避免阻塞）

@@ -3,8 +3,12 @@ import win;
 import winex;
 import config;
 import app.topmostOverlay;
+import mouse;
 
 namespace app.topmost;
+
+// GDI32 用于绘制高亮边框
+::Gdi32 := ..raw.loadDll("Gdi32.dll");
 
 // 置顶窗口表 { hwnd = {title=窗口标题, cls=窗口类名} }
 // 注意：hwnd为指针类型，仅在当前会话有效，不跨重启持久化
@@ -17,6 +21,19 @@ var hotkeyId = null;
 
 // 持续维护置顶状态的定时器
 var maintainTimerId = null;
+
+// 防抖：防止热键重复触发的时间间隔（毫秒）
+var TOGGLE_DEBOUNCE_MS = 300;
+var lastToggleTime = 0;
+
+// 窗口选择模式状态
+var selectMode = false;
+var selectTipForm = null;
+var mouseHook = null;
+var highlightHwnd = null;
+var highlightTimer = null;
+var originalCursor = null;
+var lastHighlightRect = null; // 上一次高亮区域，用于清除
 
 normalizeDebugText = function(text){
 	if(text === null) return "";
@@ -133,6 +150,11 @@ isRelatedPopupWindow = function(hwnd, targetHwnd){
 syncRelatedPopups = function(targetHwnd, info){
 	if(!targetHwnd || !info) return;
 	
+	info._scanCounter = (info._scanCounter or 0) + 1;
+	
+	// 每3次扫描才完整遍历一次窗口树，减少CPU开销
+	var fullScan = (info._scanCounter % 3) == 1;
+	
 	var activeRelated = {};
 	var trackPopup = function(hwnd){
 		if(!isRelatedPopupWindow(hwnd, targetHwnd)) return;
@@ -142,14 +164,16 @@ syncRelatedPopups = function(targetHwnd, info){
 	
 	trackPopup(..win.getForeground());
 	
-	var desktop = ::User32.GetDesktopWindow();
-	var hwnd = ::User32.GetTopWindow(desktop);
-	while(hwnd){
-		trackPopup(hwnd);
-		hwnd = ::User32.GetWindow(hwnd, 2/*_GW_HWNDNEXT*/);
+	if(fullScan){
+		var desktop = ::User32.GetDesktopWindow();
+		var hwnd = ::User32.GetTopWindow(desktop);
+		while(hwnd){
+			trackPopup(hwnd);
+			hwnd = ::User32.GetWindow(hwnd, 2/*_GW_HWNDNEXT*/);
+		}
 	}
 	
-	info.related = info.related || {};
+	info.related = info.related or {};
 	for(hwnd in info.related){
 		if(activeRelated[hwnd]) continue;
 		if(topmostWindows[hwnd]) continue;
@@ -310,6 +334,12 @@ getForegroundInfo = function(){
 
 // 置顶当前前台窗口（如果已置顶则取消）
 toggleForegroundTopmost = function(){
+	var now = ..time.tick();
+	if(now - lastToggleTime < TOGGLE_DEBOUNCE_MS){
+		return false;
+	}
+	lastToggleTime = now;
+	
 	var info = getForegroundInfo();
 	if(!info) return false;
 	
@@ -463,9 +493,274 @@ hotkeyToString = function(mod, vk){
 	return ..string.join(parts, "+");
 }
 
+// 显示选择模式提示气泡
+showSelectTip = function(){
+	if(selectTipForm){
+		selectTipForm.close();
+		selectTipForm = null;
+	}
+	
+	var workLeft, workTop, workRight, workBottom = ..win.getWorkArea();
+	var tipW = 220;
+	var tipH = 36;
+	var x = workLeft + ..math.round((workRight - workLeft - tipW) / 2);
+	var y = workTop + ..math.round((workBottom - workTop - tipH) / 2);
+	
+	selectTipForm = ..win.form(
+		text="窗口置顶";
+		left=x; top=y; right=x+tipW; bottom=y+tipH;
+		border="none";
+		layered=true;
+		toolwindow=true;
+		topmost=true;
+		transparent=0;
+		bgcolor=0xE6434343;
+	);
+	selectTipForm.setPos(x, y);
+	
+	selectTipForm.add(
+		tipText={cls="static"; text="\uF08D  选择要置顶的窗口..."; left=0; top=0; right=tipW; bottom=tipH; align="center"; valign="middle"; color=0xFFFFFFFF; font=LOGFONT(name='FontAwesome';h=-14)};
+	);
+	
+	selectTipForm.show();
+	..win.setForeground(selectTipForm.hwnd);
+}
+
+// 关闭选择模式提示气泡
+closeSelectTip = function(){
+	if(selectTipForm){
+		selectTipForm.close();
+		selectTipForm = null;
+	}
+}
+
+// 获取鼠标下的窗口
+getWindowUnderMouse = function(){
+	var pt = ..POINT();
+	::User32.GetCursorPos(pt);
+	var hwnd = ::User32.WindowFromPoint(pt.x, pt.y);
+	if(!hwnd) return null;
+	
+	// 向上查找顶层窗口
+	var desktop = ::User32.GetDesktopWindow();
+	while(hwnd && hwnd != desktop){
+		var ownerHwnd = ::User32.GetWindow(hwnd, 4/*_GW_OWNER*/);
+		var parentHwnd = ::User32.GetParent(hwnd);
+		if(parentHwnd == desktop or ownerHwnd == null){
+			break;
+		}
+		hwnd = ::User32.GetAncestor(hwnd, 3/*_GA_ROOTOWNER*/);
+	}
+	
+	return hwnd;
+}
+
+// 绘制窗口高亮边框
+drawHighlight = function(hwnd){
+	if(!hwnd || !..win.isWindow(hwnd)) return;
+	
+	var rect = ..win.getRect(hwnd);
+	if(!rect) return;
+	
+	// 窗口区域扩展2像素用于边框
+	var left = rect.left - 2;
+	var top = rect.top - 2;
+	var right = rect.right + 2;
+	var bottom = rect.bottom + 2;
+	
+	// 先清除上一次的高亮边框
+	if(lastHighlightRect){
+		clearHighlightRect(lastHighlightRect);
+	}
+	lastHighlightRect = {left=left; top=top; right=right; bottom=bottom};
+	
+	// 绘制新的高亮边框
+	var screenHwnd = ::User32.GetDesktopWindow();
+	var screenDc = ::User32.GetDCEx(screenHwnd, null, 0x1/*_DCX_CACHE*/ | 0x2/*_DCX_CLIPSIBLINGS*/ | 0x4/*_DCX_CLIPCHILDREN*/);
+	if(!screenDc) return;
+	
+	var pen = ::Gdi32.CreatePen(0x1/*_PS_SOLID*/, 3, 0xFF33CC);
+	var oldPen = ::Gdi32.SelectObject(screenDc, pen);
+	var oldBrush = ::Gdi32.SelectObject(screenDc, ::Gdi32.GetStockObject(0/*_NULL_BRUSH*/));
+	
+	::Gdi32.Rectangle(screenDc, left, top, right, bottom);
+	
+	::Gdi32.SelectObject(screenDc, oldPen);
+	::Gdi32.SelectObject(screenDc, oldBrush);
+	::Gdi32.DeleteObject(pen);
+	::User32.ReleaseDC(screenHwnd, screenDc);
+}
+
+// 清除高亮边框
+clearHighlightRect = function(rect){
+	if(!rect) return;
+	
+	var screenHwnd = ::User32.GetDesktopWindow();
+	var screenDc = ::User32.GetDCEx(screenHwnd, null, 0x1/*_DCX_CACHE*/ | 0x2/*_DCX_CLIPSIBLINGS*/ | 0x4/*_DCX_CLIPCHILDREN*/);
+	if(!screenDc) return;
+	
+	// 使用屏幕背景色清除边框
+	var brush = ::Gdi32.CreateSolidBrush(0x0/*透明*/);
+	var oldBrush = ::Gdi32.SelectObject(screenDc, brush);
+	
+	// 擦除整个区域
+	::Gdi32.PatBlt(screenDc, rect.left - 3, rect.top - 3, rect.right - rect.left + 6, rect.bottom - rect.top + 6, 0x00420086/*_PATINVERT*/);
+	
+	::Gdi32.SelectObject(screenDc, oldBrush);
+	::Gdi32.DeleteObject(brush);
+	::User32.ReleaseDC(screenHwnd, screenDc);
+}
+
+// 清除高亮
+clearHighlight = function(){
+	if(lastHighlightRect){
+		clearHighlightRect(lastHighlightRect);
+		lastHighlightRect = null;
+	}
+	highlightHwnd = null;
+}
+
+// 开始窗口选择模式
+startSelectMode = function(){
+	if(selectMode) return;
+	selectMode = true;
+	
+	// 保存原鼠标指针并设置为十字
+	originalCursor = ::User32.LoadCursor(null, 0x7F02/*_IDC_CROSS*/);
+	::User32.SetCursor(originalCursor);
+	
+	// 显示提示气泡
+	showSelectTip();
+	
+	// 创建鼠标钩子监听鼠标移动和点击
+	if(!mouseHook){
+		mouseHook = ..mouse.global();
+	}
+	
+	mouseHook.proc = function(msg, vk, x, y, flags, time, extra){
+		if(!selectMode) return;
+		
+		if(msg == 0x200/*_WM_MOUSEMOVE*/){
+			// 高亮鼠标下的窗口
+			var hwnd = getWindowUnderMouse();
+			if(hwnd && hwnd != highlightHwnd){
+				highlightHwnd = hwnd;
+			}
+		}
+		elseif(msg == 0x201/*_WM_LBUTTONDOWN*/){
+			// 左键点击，选择窗口置顶
+			var hwnd = getWindowUnderMouse();
+			if(hwnd){
+				// 排除桌面和ImTip
+				var desktop = ::User32.GetDesktopWindow();
+				if(hwnd != desktop && (!..mainForm or hwnd != ..mainForm.hwnd)){
+					topmostSelectedWindow(hwnd);
+				}
+			}
+			endSelectMode();
+			return true;
+		}
+		elseif(msg == 0x204/*_WM_RBUTTONDOWN*/ or msg == 0x1B/*_WM_KEYDOWN*/ and vk == 0x1B/*_VK_ESCAPE*/){
+			// 右键或ESC取消选择
+			endSelectMode();
+			return true;
+		}
+	}
+	
+	// 启动高亮绘制定时器
+	if(highlightTimer){
+		..win.clearInterval(highlightTimer);
+	}
+	highlightTimer = ..win.setInterval(function(){
+		if(!selectMode) {
+			..win.clearInterval(highlightTimer);
+			highlightTimer = null;
+			return;
+		}
+		// 重绘高亮
+		if(highlightHwnd && ..win.isWindow(highlightHwnd)){
+			drawHighlight(highlightHwnd);
+		}
+	}, 50);
+}
+
+// 结束窗口选择模式
+endSelectMode = function(){
+	if(!selectMode) return;
+	selectMode = false;
+	
+	// 关闭提示气泡
+	closeSelectTip();
+	
+	// 清除高亮
+	if(lastHighlightRect){
+		clearHighlightRect(lastHighlightRect);
+		lastHighlightRect = null;
+	}
+	highlightHwnd = null;
+	
+	// 恢复原鼠标指针
+	if(originalCursor){
+		::User32.SetCursor(originalCursor);
+	}
+	
+	// 关闭高亮定时器
+	if(highlightTimer){
+		..win.clearInterval(highlightTimer);
+		highlightTimer = null;
+	}
+}
+
+// 置顶选中的窗口
+topmostSelectedWindow = function(hwnd){
+	if(!hwnd) return;
+	
+	// 解析顶层窗口
+	hwnd = resolveTopLevelWindow(hwnd);
+	if(!hwnd) return;
+	
+	// 检查是否已置顶，如果已置顶则取消
+	if(topmostWindows[hwnd]){
+		clearRelatedTopmost(topmostWindows[hwnd]);
+		applyTopmostState(hwnd, false);
+		topmostWindows[hwnd] = null;
+		try{ ..app.topmostOverlay.removeOverlay(hwnd); }
+		return;
+	}
+	
+	// 获取窗口信息
+	var title = ..winex.getText(hwnd);
+	if(!#title) title = ..win.getText(hwnd);
+	var cls = ..win.getClass(hwnd);
+	if(!#title) title = "窗口";
+	
+	// 设置置顶
+	applyTopmostState(hwnd, true);
+	
+	topmostWindows[hwnd] = { title = title; cls = cls; related = {} };
+	writeDebugSnapshot(hwnd, topmostWindows[hwnd], {});
+	ensureMaintainTimer();
+	try{ ..app.topmostOverlay.createOverlay(hwnd); }
+}
+
+// 切换前台窗口置顶（旧接口保留，内部改为选择模式）
+toggleForegroundTopmost = function(){
+	var now = ..time.tick();
+	if(now - lastToggleTime < TOGGLE_DEBOUNCE_MS){
+		return false;
+	}
+	lastToggleTime = now;
+	
+	// 进入窗口选择模式
+	startSelectMode();
+	return true;
+}
+
 /**intellisense(app.topmost)
 getForegroundInfo() = 获取前台窗口信息\n返回 {hwnd,title,cls} 或 null
-toggleForegroundTopmost() = 切换当前前台窗口的置顶状态\n已置顶则取消，未置顶则置顶\n返回是否成功
+toggleForegroundTopmost() = 进入窗口选择模式\n点击窗口进行置顶/取消置顶\n返回是否成功
+startSelectMode() = 开始窗口选择模式
+endSelectMode() = 结束窗口选择模式
 removeTopmost(hwnd) = 取消指定窗口的置顶\n返回是否成功
 removeAllTopmost() = 取消所有置顶窗口\n返回取消的窗口数量
 getTopmostCount() = 获取置顶窗口数量
